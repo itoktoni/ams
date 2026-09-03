@@ -36,15 +36,24 @@
                 <tr>
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary">
+                        @can('beritaAcara', $model)
+                        <a href="{{ route('aset.getBeritaAcara', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="Cetak Berita Acara">
+                            <span class="material-symbols-outlined text-lg">print</span>
+                        </a>
+                        @endcan
                         <a href="{{ route('dokumen-aset.getTable') }}?filters[aset_dokumen_id_aset][$eq]={{ $table->field_primary }}" wire:navigate class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-info/10 text-info hover:bg-info/20 transition-colors" title="Dokumen Terkait">
                             <span class="material-symbols-outlined text-lg">description</span>
                         </a>
+                        @can('table', app(\App\Models\BukuPenyusutan::class))
                         <a href="{{ route('buku-penyusutan.getTable') }}?filters[buku_penyusutan_id_aset][$eq]={{ $table->field_primary }}" wire:navigate class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-warning/10 text-warning hover:bg-warning/20 transition-colors" title="Detail Penyusutan">
                             <span class="material-symbols-outlined text-lg">trending_down</span>
                         </a>
+                        @endcan
+                        @can('recalc', $model)
                         <a href="{{ route('aset.getRecalc', ['id' => $table->field_primary]) }}" onclick="return confirm('Hapus kalkulasi lama & hitung ulang dari awal s/d bulan ini?')" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-success/10 text-success hover:bg-success/20 transition-colors" title="Kalkulasi Ulang">
                             <span class="material-symbols-outlined text-lg">calculate</span>
                         </a>
+                        @endcan
                     </x-table-action>
                     @foreach ($model::$sortColumns as $column)
                         @if ($column === 'aset_harga_perolehan')
@@ -138,6 +147,7 @@
                         <div class="flex items-center justify-between px-3.5 py-2.5 bg-surface-container-low/40 border-t border-outline-variant/10" onclick="event.stopPropagation()">
                             <span class="text-[10px] font-mono text-on-surface-variant/60">ID {{ $table->field_primary }}</span>
                             <div class="flex gap-1.5">
+                                <a href="{{ route('aset.getBeritaAcara', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary hover:bg-primary/20" title="Berita Acara"><span class="material-symbols-outlined text-lg">print</span></a>
                                 <a href="{{ route('aset.getUpdate', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-outline-variant/30 text-on-surface-variant hover:text-primary" title="Detail"><span class="material-symbols-outlined text-lg">visibility</span></a>
                                 <a href="{{ route('dokumen-aset.getTable') }}?filters[aset_dokumen_id_aset][$eq]={{ $table->field_primary }}" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-info/10 text-info" title="Dokumen"><span class="material-symbols-outlined text-lg">description</span></a>
                                 <a href="{{ route('buku-penyusutan.getTable') }}?filters[buku_penyusutan_id_aset][$eq]={{ $table->field_primary }}" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-warning/10 text-warning" title="Penyusutan"><span class="material-symbols-outlined text-lg">trending_down</span></a>

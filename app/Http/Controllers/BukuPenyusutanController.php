@@ -9,15 +9,47 @@ use App\Models\BukuPenyusutan;
 
 class BukuPenyusutanController extends Controller
 {
-    use ControllerTrait;
+    use ControllerTrait {
+        getData as traitGetData;
+    }
 
     public function __construct(BukuPenyusutan $model)
     {
         $this->model = $model::getModel();
     }
 
+    protected function getData()
+    {
+        $query = $this->traitGetData();
+        $user = auth()->user();
+        if ($user && in_array($user->role, ['pengguna_aset','user','customer'], true)) {
+            $asetIds = Aset::where('aset_id_penanggung_jawab', $user->id)->pluck('aset_id')->all();
+            if (empty($asetIds)) {
+                $query->whereRaw('1=0');
+            } else {
+                $query->whereIn('buku_penyusutan_id_aset', $asetIds);
+            }
+            // jika filter aset spesifik tapi bukan miliknya → 403 handled di getTable
+        }
+        return $query;
+    }
+
     public function getTable(GeneralRequest $request)
     {
+        // untuk pengguna_aset, cek filter aset miliknya
+        $user = auth()->user();
+        if ($user && in_array($user->role, ['pengguna_aset','user'], true)) {
+            $filters = $request->input('filters', []);
+            $asetId = $filters['buku_penyusutan_id_aset']['$eq'] ?? $filters['buku_penyusutan_id_aset'] ?? null;
+            if (is_array($asetId)) $asetId = $asetId['$eq'] ?? null;
+            if (! empty($asetId)) {
+                $allowed = Aset::where('aset_id_penanggung_jawab', $user->id)->pluck('aset_id')->all();
+                if (! in_array((int)$asetId, $allowed, true) && ! in_array($asetId, $allowed, true)) {
+                    abort(403, 'Anda hanya boleh melihat penyusutan aset yang di-assign kepada Anda.');
+                }
+            }
+        }
+
         $data = $this->getData()->cursorPaginate($request->input('per_page', 25))->withQueryString();
 
         // Summary khusus jika filter aset aktif ?filters[buku_penyusutan_id_aset][$eq]=1

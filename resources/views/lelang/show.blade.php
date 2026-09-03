@@ -131,6 +131,16 @@
                 <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wide block mb-1">Kontak (opsional)</label>
                 <input type="text" name="kontak" value="{{ old('kontak', auth()->user()->email) }}" placeholder="No HP / email" class="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:border-primary outline-none text-sm">
               </div>
+              @php $captchaKey = 'lelang_'.uniqid(); @endphp
+              <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wide block mb-1">Captcha <span class="text-error">*</span></label>
+                <div class="flex gap-2">
+                  <img src="{{ route('captcha.contact') }}?key={{ $captchaKey }}" alt="captcha" class="h-11 rounded-xl border border-outline-variant bg-white cursor-pointer" onclick="this.src='{{ route('captcha.contact') }}?key={{ $captchaKey }}&t='+Date.now()" title="Klik untuk refresh">
+                  <input type="hidden" name="captcha_key" value="{{ $captchaKey }}">
+                  <input type="number" name="captcha" placeholder="Jawab ?" class="flex-1 h-11 px-4 bg-white border border-outline-variant rounded-xl focus:border-primary outline-none text-sm" required>
+                </div>
+                <p class="text-[11px] text-on-surface-variant mt-1">Isi hasil penjumlahan / perkalian di gambar (anti-bot).</p>
+              </div>
               <button type="submit" class="w-full h-11 bg-primary text-white rounded-xl font-semibold hover:bg-[#001d6b] transition flex items-center justify-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">send</span> Kirim Penawaran
               </button>

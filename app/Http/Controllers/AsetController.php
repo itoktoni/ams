@@ -7,7 +7,9 @@ use App\Http\Requests\GeneralRequest;
 use App\Models\Aset;
 use App\Models\BukuPenyusutan;
 use App\Models\KategoriAset;
+use App\Models\User;
 use App\Services\PenyusutanService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
 class AsetController extends Controller
@@ -15,6 +17,7 @@ class AsetController extends Controller
     use ControllerTrait {
         postCreate as traitPostCreate;
         postUpdate as traitPostUpdate;
+        getData as traitGetData;
     }
 
     public function __construct(Aset $model)
@@ -82,6 +85,43 @@ class AsetController extends Controller
                 $request->merge([$f => $existing[$f] ?? null]);
             }
         }
+    }
+
+    protected function getData()
+    {
+        $query = $this->traitGetData();
+
+        $user = auth()->user();
+        if (! $user) return $query;
+
+        // pengguna_aset / customer / user biasa: hanya lihat aset yang di-assign ke dia
+        // admin, developer, supervisor, teknisi: lihat semua
+        $restrictedRoles = ['pengguna_aset', 'customer', 'user'];
+        if (in_array($user->role, $restrictedRoles, true)) {
+            $query->where('aset_id_penanggung_jawab', $user->id);
+        }
+
+        return $query;
+    }
+
+    public function getBeritaAcara(GeneralRequest $request, $id)
+    {
+        $aset = $this->model->with(['hasKategori','hasLokasi','hasPenanggungJawab'])->findOrFail($id);
+        $penerima = $aset->hasPenanggungJawab ?? User::where('role', 'pengguna_aset')->first() ?? $aset->hasPenanggungJawab;
+        if (! $penerima) {
+            abort(404, 'Aset belum di-assign ke pengguna (aset_id_penanggung_jawab kosong). Assign dulu via form aset.');
+        }
+        $pemberi = auth()->user();
+
+        $pdf = Pdf::loadView('pdf.berita-acara', [
+            'aset' => $aset,
+            'penerima' => $penerima,
+            'pemberi' => $pemberi,
+        ])->setPaper('A4', 'portrait');
+
+        $filename = 'BA-'.$aset->aset_kode.'-'.$penerima->id.'.pdf';
+
+        return $pdf->download($filename);
     }
 
     /**

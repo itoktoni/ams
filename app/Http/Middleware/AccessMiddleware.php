@@ -31,6 +31,35 @@ class AccessMiddleware
             return redirect()->route('login');
         }
 
+        // Customer hanya boleh halaman publik + lelang (web login, anti-bot injection)
+        if (($user->role ?? null) === 'customer') {
+            $routeName = $request->route()?->getName() ?? '';
+            $path = $request->path();
+
+            $isPublic = $routeName && (
+                in_array($routeName, ['lelang.index','lelang.show','lelang.bid','login','register','password.request','password.email','password.reset','verification.notice','verification.verify','home','blog','page','post','category','tag','services','contact','search','api.content','captchaImage'])
+                || str_starts_with($routeName, 'lelang.')
+                || $routeName === 'home'
+            );
+
+            // path fallback untuk PublicController (/, /page/*, /blog*, /lelang*, /api/*, /captcha/*)
+            if (! $isPublic) {
+                $isPublic = $path === '/' 
+                    || str_starts_with($path, 'lelang')
+                    || str_starts_with($path, 'api')
+                    || str_starts_with($path, 'captcha')
+                    || str_starts_with($path, 'blog')
+                    || str_starts_with($path, 'page')
+                    || $path === 'contact'
+                    || $path === 'services'
+                    || $path === 'search';
+            }
+
+            if (! $isPublic) {
+                return redirect()->route('lelang.index')->with('error', 'Customer hanya boleh akses halaman publik dan lelang. Silakan kembali ke lelang.');
+            }
+        }
+
         $method = $request->route()->getActionMethod();
         $routeName = $request->route()->getName();
 

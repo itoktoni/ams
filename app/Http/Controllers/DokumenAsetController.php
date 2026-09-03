@@ -11,6 +11,7 @@ class DokumenAsetController extends Controller
     use ControllerTrait {
         postCreate as traitPostCreate;
         postUpdate as traitPostUpdate;
+        getData as traitGetData;
     }
 
     public function __construct(DokumenAset $model)
@@ -44,5 +45,20 @@ class DokumenAsetController extends Controller
                 $request->merge([$f => $existing[$f] ?? null]);
             }
         }
+    }
+
+    protected function getData()
+    {
+        $query = $this->traitGetData();
+        $user = auth()->user();
+        if ($user && in_array($user->role, ['pengguna_aset','user'], true)) {
+            $asetIds = \App\Models\Aset::where('aset_id_penanggung_jawab', $user->id)->pluck('aset_id')->all();
+            if (empty($asetIds)) {
+                $query->whereRaw('1=0');
+            } else {
+                $query->whereIn('aset_dokumen_id_aset', $asetIds);
+            }
+        }
+        return $query;
     }
 }

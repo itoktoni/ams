@@ -100,7 +100,7 @@ return [
             'items' => [
                 ['route' => 'settings.website', 'icon' => 'language', 'label' => 'Website'],
                 ['route' => 'settings.env', 'icon' => 'settings', 'label' => 'Environment'],
-                ['route' => 'native-bridge-test', 'icon' => 'phone_android', 'label' => 'NativeBridge Test'],
+                ['route' => 'native-bridge-test', 'icon' => 'phone_android', 'label' => 'Android App'],
             ],
         ],
     ],

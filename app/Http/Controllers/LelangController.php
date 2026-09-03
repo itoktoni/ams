@@ -61,30 +61,46 @@ class LelangController extends Controller
         $request->validate([
             'harga' => 'required|numeric|min:0',
             'kontak' => 'nullable|string|max:60',
+            'captcha' => 'required|numeric',
+            'captcha_key' => 'required|string',
         ]);
 
-        $harga = (float) $request->input('harga');
-        $highest = $item->hasPenawaran()->max('penawaran_penjualan_harga');
-        $minBid = $highest ? (float) $highest + 1000 : (float) ($item->penjualan_aset_harga_appraisal ?? 0);
-        if ($minBid <= 0) $minBid = 100000;
-
-        if ($harga < $minBid) {
-            return back()->withErrors(['harga' => 'Penawaran minimum Rp ' . number_format($minBid, 0, ',', '.')])->withInput();
+        // Captcha anti-bot (reuse PublicController::captchaImage)
+        $key = $request->input('captcha_key');
+        $answer = (int) $request->input('captcha');
+        if (! $request->session()->has("captcha_$key") || $request->session()->get("captcha_$key") !== $answer) {
+            return back()->withErrors(['captcha' => 'Captcha salah.'])->withInput();
         }
+        $request->session()->forget("captcha_$key");
+
+        $harga = (float) $request->input('harga');
 
         $user = Auth::user();
 
-        PenawaranPenjualan::create([
-            'penawaran_penjualan_id_penjualan' => $item->penjualan_aset_id,
-            'penawaran_penjualan_id_user' => $user?->id,
-            'penawaran_penjualan_nama_pembeli' => $user?->name ?? $request->input('nama', 'Guest'),
-            'penawaran_penjualan_kontak' => $request->input('kontak') ?? $user?->email,
-            'penawaran_penjualan_harga' => $harga,
-            'penawaran_penjualan_tanggal' => now()->toDateString(),
-            'penawaran_penjualan_waktu' => now(),
-            'penawaran_penjualan_status' => 'diajukan',
-            'penawaran_penjualan_hasil' => 'Menunggu verifikasi',
-        ]);
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($item, $request, $harga, $user) {
+                $locked = PenjualanAset::where('penjualan_aset_id', $item->penjualan_aset_id)->lockForUpdate()->first();
+                $highestLocked = \App\Models\PenawaranPenjualan::where('penawaran_penjualan_id_penjualan', $locked->penjualan_aset_id)->max('penawaran_penjualan_harga');
+                $minLocked = $highestLocked ? (float) $highestLocked + 1000 : (float) ($locked->penjualan_aset_harga_appraisal ?? 0);
+                if ($minLocked <= 0) $minLocked = 100000;
+                if ($harga < $minLocked) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['harga' => 'Penawaran minimum Rp ' . number_format($minLocked, 0, ',', '.')]);
+                }
+                \App\Models\PenawaranPenjualan::create([
+                    'penawaran_penjualan_id_penjualan' => $item->penjualan_aset_id,
+                    'penawaran_penjualan_id_user' => $user?->id,
+                    'penawaran_penjualan_nama_pembeli' => $user?->name ?? $request->input('nama', 'Guest'),
+                    'penawaran_penjualan_kontak' => $request->input('kontak') ?? $user?->email,
+                    'penawaran_penjualan_harga' => $harga,
+                    'penawaran_penjualan_tanggal' => now()->toDateString(),
+                    'penawaran_penjualan_waktu' => now(),
+                    'penawaran_penjualan_status' => 'diajukan',
+                    'penawaran_penjualan_hasil' => 'Menunggu verifikasi',
+                ]);
+            });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        }
 
         return back()->with('success', 'Penawaran Rp ' . number_format($harga, 0, ',', '.') . ' berhasil dikirim!');
     }

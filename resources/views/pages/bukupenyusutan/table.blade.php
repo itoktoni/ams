@@ -73,6 +73,7 @@
             <x-slot:head>
                 <x-table-checkbox :model="$model" onchange="toggleAll(this)" />
                 <th>Actions</th>
+                <th class="text-left whitespace-nowrap">Aset</th>
                 @foreach ($model::$sortColumns as $column)
                 <x-table-sort field="{{ $column }}" label="{{ formatLabel($column) }}" :sortField="$sortField" :sortDir="$sortDir" />
                 @endforeach
@@ -83,6 +84,17 @@
                 <tr>
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary" />
+                    <td class="min-w-[160px]">
+                        @php $aset = $table->hasAset; @endphp
+                        @if($aset)
+                            <a href="{{ route('aset.getUpdate', ['id' => $aset->aset_id]) }}" class="inline-flex items-center gap-1.5 hover:text-primary transition-colors">
+                                <span class="font-medium text-on-surface truncate">{{ $aset->aset_nama }}</span>
+                                <span class="text-xs font-mono text-on-surface-variant">— {{ $aset->aset_kode }}</span>
+                            </a>
+                        @else
+                            <span class="text-on-surface-variant">#{{ $table->buku_penyusutan_id_aset }}</span>
+                        @endif
+                    </td>
                     @foreach ($model::$sortColumns as $column)
                         @if (in_array($column, ['buku_penyusutan_nilai','buku_penyusutan_akumulasi','buku_penyusutan_nilai_buku']))
                             <td class="text-right tabular-nums">{{ formatRupiah($table->$column) }}</td>
@@ -98,9 +110,28 @@
                 <x-table-mobile-select :model="$model" :total="$data"/>
                 <div class="p-3 space-y-3" id="mBody">
                     @foreach($data as $table)
-                    <div class="border border-outline-variant rounded-xl p-4 bg-surface-container-lowest shadow-sm" data-id="{{ $table->field_primary }}">
-                        <p class="text-sm font-bold text-on-surface truncate mb-3">{{ $table->buku_penyusutan_periode ?? 'Buku' }}</p>
-                        <div class="grid grid-cols-2 gap-3 mb-3">
+                    @php $asetM = $table->hasAset; @endphp
+                    <div class="bg-white rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden" data-id="{{ $table->field_primary }}" onclick="mToggle(this)">
+                        <div class="p-3.5">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <button class="w-6 h-6 rounded-full border border-outline-variant/30 flex items-center justify-center shrink-0" onclick="event.stopPropagation(); mToggle(this.closest('[data-id]'))">
+                                        <span data-check class="icon-[tabler--circle] size-5 text-base-content/20 shrink-0"></span>
+                                    </button>
+                                    <span class="text-xs font-mono font-bold text-primary px-2 py-1 rounded-full bg-primary/5 border border-primary/10">{{ $table->buku_penyusutan_periode ?? 'Buku' }}</span>
+                                    @if(empty($summary) && $asetM)
+                                        <span class="text-xs text-on-surface-variant truncate hidden sm:inline">{{ $asetM->aset_nama }} — {{ $asetM->aset_kode }}</span>
+                                    @endif
+                                </div>
+                                <span class="material-symbols-outlined text-lg text-on-surface-variant/20" onclick="event.stopPropagation(); window.location='{{ route('buku-penyusutan.getUpdate', ['id' => $table->field_primary]) }}'">chevron_right</span>
+                            </div>
+                            @if(empty($summary) && $asetM)
+                                <a href="{{ route('aset.getUpdate', ['id' => $asetM->aset_id]) }}" class="flex items-center gap-2 mt-3" onclick="event.stopPropagation()">
+                                    <span class="material-symbols-outlined text-sm text-primary">inventory_2</span>
+                                    <span class="text-xs font-bold text-primary truncate">{{ $asetM->aset_nama }} — {{ $asetM->aset_kode }}</span>
+                                </a>
+                            @endif
+                        <div class="grid grid-cols-2 gap-3 mt-3">
                             <div>
                                 <p class="text-[10px] text-on-surface-variant uppercase tracking-wide mb-0.5">Periode</p>
                                 <p class="text-xs font-medium text-primary truncate">{{ $table->buku_penyusutan_periode ?? '-' }}</p>
@@ -118,7 +149,8 @@
                                 <p class="text-xs font-medium text-on-surface">{{ formatRupiah($table->buku_penyusutan_akumulasi) }}</p>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between pt-2 border-t border-outline-variant/50">
+                        </div>
+                        <div class="flex items-center justify-between px-3.5 py-2.5 bg-surface-container-low/40 border-t border-outline-variant/10" onclick="event.stopPropagation()">
                             <span class="text-[9px] font-mono text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">{{ $table->field_primary }}</span>
                             <div class="flex gap-1" onclick="event.stopPropagation()">
                                 <x-table-action :model="$model" :id="$table->field_primary" />

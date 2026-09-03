@@ -113,6 +113,26 @@ class User extends Authenticatable
         return $this->role === 'editor';
     }
 
+    public function isTeknisi(): bool
+    {
+        return $this->role === 'teknisi';
+    }
+
+    public function isPenggunaAset(): bool
+    {
+        return $this->role === 'pengguna_aset';
+    }
+
+    public function isSupervisor(): bool
+    {
+        return $this->role === 'supervisor';
+    }
+
+    public function isCustomer(): bool
+    {
+        return $this->role === 'customer';
+    }
+
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPasswordNotification($token));

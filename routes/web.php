@@ -31,7 +31,7 @@ Route::middleware('auth')->post('/centrifugo/token', function (Request $request)
 // Public Lelang — dapat diakses tanpa login, bid butuh auth
 Route::get('/lelang', [LelangController::class, 'index'])->name('lelang.index');
 Route::get('/lelang/{id}', [LelangController::class, 'show'])->name('lelang.show');
-Route::post('/lelang/{id}/bid', [LelangController::class, 'bid'])->middleware('auth')->name('lelang.bid');
+Route::post('/lelang/{id}/bid', [LelangController::class, 'bid'])->middleware(['auth','throttle:10,1'])->name('lelang.bid');
 
 Route::middleware(['auth', 'verified', 'access'])->group(function () {
 

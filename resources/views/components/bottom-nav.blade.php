@@ -1,5 +1,31 @@
 @php
     $bottomNav = config('menu.bottom_nav');
+    $user = auth()->user();
+    $restrict = config('permision', []);
+    $role = $user?->role ?? 'guest';
+    $isDenied = function($routeName) use ($restrict, $role) {
+        if (! isset($restrict[$role])) return false;
+        $mod = explode('.', $routeName)[0];
+        foreach ($restrict[$role] as $key => $rule) {
+            $match = $mod === $key || str_starts_with($mod, $key) || str_starts_with($routeName, $key.'.') || $routeName === $key;
+            if (! $match) continue;
+            if ($rule === false) return true;
+            if (is_array($rule) && (in_array('table', $rule, true) || isset($rule['table']))) return true;
+        }
+        return false;
+    };
+    // customer khusus: ganti bottom nav jadi Home + Lelang
+    if ($role === 'customer') {
+        $bottomNav = [
+            ['route' => 'dashboard', 'icon' => 'home', 'label' => 'Home'],
+            ['route' => 'lelang.index', 'icon' => 'gavel', 'label' => 'Lelang'],
+        ];
+        // filter tetap, tapi lelang tidak di-restrict
+    } else {
+        $bottomNav = collect($bottomNav)->filter(fn($it) => ! $isDenied($it['route']))->values()->all();
+        if (count($bottomNav) > 5) $bottomNav = array_slice($bottomNav, 0, 5);
+        if (empty($bottomNav)) $bottomNav = config('menu.bottom_nav');
+    }
 @endphp
 
 <nav class="md:hidden fixed inset-x-0 bottom-0 z-50 h-16 bg-surface-container-lowest border-t border-outline-variant shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
