@@ -8,13 +8,10 @@ use App\Models\Aset;
 use App\Models\Department;
 use App\Models\DokumenAset;
 use App\Models\JadwalService;
-use App\Models\Notification;
 use App\Models\Peminjaman;
 use App\Models\PermintaanSukuCadang;
-use App\Models\StokSukuCadang;
 use App\Models\Teknisi;
 use App\Models\Tiket;
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -26,23 +23,19 @@ class DashboardController extends Controller
         $role = $user->role ?? 'guest';
         $deptId = $user->department_id ?? null;
 
-        $stats = [
-            'total_users' => User::count(),
-            'total_notifications' => Notification::count(),
-            'unread_notifications' => Notification::where('read', false)->count(),
-        ];
-
-        $recentUsers = User::latest()->limit(5)->get();
-
         $amsStats = $this->buildAmsStats($role, $user, $deptId);
         $extra = $this->buildExtra($role, $user, $deptId);
 
-        $amsChartAset = $this->safeChart(fn () => $chart->asetStatusDistribution());
-        $amsChartTiket = $this->safeChart(fn () => $chart->tiketStatusDistribution());
+        // Hanya 2 chart yang masih dipakai view: distribusi status aset & tiket.
+        // (Chart registrasi user & notifikasi dihapus karena nilai operasionalnya rendah.)
+        $amsChartAset = in_array($role, ['developer', 'admin', 'supervisor'], true)
+            ? $this->safeChart(fn () => $chart->asetStatusDistribution())
+            : null;
+        $amsChartTiket = in_array($role, ['developer', 'admin', 'supervisor', 'teknisi'], true)
+            ? $this->safeChart(fn () => $chart->tiketStatusDistribution())
+            : null;
 
-        return view('dashboard', array_merge(compact('stats', 'recentUsers', 'amsStats', 'amsChartAset', 'amsChartTiket'), $extra, ['role' => $role]))
-            ->with('userChart', $chart->userRegistrations())
-            ->with('notifChart', $chart->notificationStats());
+        return view('dashboard', array_merge(compact('amsStats', 'amsChartAset', 'amsChartTiket'), $extra, ['role' => $role]));
     }
 
     private function buildAmsStats(string $role, $user, $deptId): array
@@ -150,7 +143,6 @@ class DashboardController extends Controller
             return $q->latest('tiket_id')->limit(5)->get();
         }, collect());
 
-        $recentAlerts = $this->safeQuery(fn () => Alert::latest('alert_id')->limit(4)->get(), collect());
         $opnameProgress = $this->safeQuery(fn () => DB::table('opname')->where('opname_status', 'proses')->count(), 0);
         $kategoriDist = $this->safeQuery(function () use ($isPengguna, $myAsetIds) {
             $q = Aset::select('aset_kategori_nama', DB::raw('count(*) as total'))->leftJoin('aset_kategori', 'aset_kategori.aset_kategori_id', '=', 'aset.aset_id_kategori');
@@ -199,7 +191,7 @@ class DashboardController extends Controller
             }, null);
         }
 
-        return compact('recentAset', 'recentTiket', 'recentAlerts', 'kategoriDist', 'expiringCustom', 'opnameProgress', 'permintaanRecent', 'budgetInfo');
+        return compact('recentAset', 'recentTiket', 'kategoriDist', 'expiringCustom', 'opnameProgress', 'permintaanRecent', 'budgetInfo');
     }
 
     private function safeCount(callable $callback, int $default = 0): int

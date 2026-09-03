@@ -75,7 +75,10 @@ class DashboardChart
             ->setSubtitle('Distribusi kondisi aset')
             ->addData($data)
             ->setLabels($labels)
-            ->setColors(['#16a34a', '#3755c3', '#d97706', '#dc2626', '#6b7280', '#9333ea']);
+            ->setColors(['#16a34a', '#3755c3', '#d97706', '#dc2626', '#6b7280', '#9333ea'])
+            ->setHeight(300)
+            ->setToolbar(false)
+            ->setOptions($this->donutOptions());
     }
 
     /**
@@ -101,6 +104,59 @@ class DashboardChart
             ->setSubtitle('Distribusi tiket per status')
             ->addData($data)
             ->setLabels($labels)
-            ->setColors(['#3755c3', '#0ea5e9', '#d97706', '#16a34a', '#9333ea', '#dc2626']);
+            ->setColors(['#3755c3', '#0ea5e9', '#d97706', '#16a34a', '#9333ea', '#dc2626'])
+            ->setHeight(300)
+            ->setToolbar(false)
+            ->setOptions($this->donutOptions());
+    }
+
+    /**
+     * Shared responsive config for donut charts so they render cleanly on mobile:
+     * legend to the bottom, proportional donut, shorter height on small screens.
+     * Only keys that do NOT conflict with the Larapex default options are set here
+     * (chart type/height/width/toolbar come from the dedicated setters to avoid the
+     * array_merge_recursive clash inside HasOptions::getOptions()).
+     */
+    private function donutOptions(): array
+    {
+        return [
+            'legend' => [
+                'position' => 'bottom',
+                'fontSize' => '13px',
+                'markers' => ['width' => 10, 'height' => 10],
+                'itemMargin' => ['horizontal' => 6, 'vertical' => 2],
+                'labels' => ['colors' => '#52525b'],
+            ],
+            'plotOptions' => [
+                'pie' => [
+                    'donut' => [
+                        'size' => '68%',
+                        'labels' => [
+                            'show' => true,
+                            'name' => ['fontSize' => '13px'],
+                            'value' => ['fontSize' => '18px', 'fontWeight' => 700],
+                            'total' => [
+                                'show' => true,
+                                'label' => 'Total',
+                                'fontSize' => '13px',
+                                'fontWeight' => 600,
+                                'color' => '#52525b',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            // ApexCharts expects `responsive` at the top level (not under `chart`).
+            'responsive' => [
+                [
+                    'breakpoint' => 480,
+                    'options' => [
+                        'chart' => ['height' => 250],
+                        'legend' => ['fontSize' => '11px', 'itemMargin' => ['horizontal' => 4, 'vertical' => 1]],
+                        'plotOptions' => ['pie' => ['donut' => ['size' => '62%']]],
+                    ],
+                ],
+            ],
+        ];
     }
 }
