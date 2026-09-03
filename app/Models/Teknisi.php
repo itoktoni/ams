@@ -25,6 +25,7 @@ class Teknisi extends BaseModel
         'teknisi_kode',
         'teknisi_nama',
         'teknisi_telepon',
+        'teknisi_telegram_id',
         'teknisi_keahlian',
         'teknisi_zona',
         'teknisi_sertifikasi',
@@ -75,6 +76,7 @@ class Teknisi extends BaseModel
             'teknisi_kode' => 'required|string|max:255',
             'teknisi_nama' => 'required|string|max:255',
             'teknisi_telepon' => 'nullable|string|max:50',
+            'teknisi_telegram_id' => 'nullable|string|max:50',
             'teknisi_keahlian' => 'nullable|string',
             'teknisi_zona' => 'nullable|string',
             'teknisi_sertifikasi' => 'nullable|string',
@@ -142,5 +144,15 @@ class Teknisi extends BaseModel
     public function hasUser()
     {
         return $this->hasOne(User::class, 'id', 'teknisi_id_user');
+    }
+
+    public function hasKategori()
+    {
+        return $this->belongsToMany(KategoriAset::class, 'kategori_teknisi', 'teknisi_id', 'kategori_id')->withTimestamps();
+    }
+
+    public function hasKategoriTeknisi()
+    {
+        return $this->hasMany(KategoriTeknisi::class, 'teknisi_id', 'teknisi_id');
     }
 }

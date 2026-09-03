@@ -9,6 +9,16 @@ class WebsiteSetting
         return 'name';
     }
 
+    public static function name(): string
+    {
+        return config('website.name', 'KIRO AMS');
+    }
+
+    public static function tagline(): string
+    {
+        return config('website.tagline', 'Asset Management System');
+    }
+
     public static function merged(): array
     {
         return config('website');

@@ -144,4 +144,56 @@ class Aset extends BaseModel
     {
         return $this->hasMany(LogStatusAset::class, 'log_status_aset_id_aset', 'aset_id');
     }
+
+    /**
+     * Peminjaman yang sedang aktif (aset sedang dipinjam).
+     * null = tersedia.
+     */
+    public function hasPeminjamanAktif()
+    {
+        return $this->hasOne(\App\Models\Peminjaman::class, 'peminjaman_id_aset', 'aset_id')
+            ->where('peminjaman_status', 'aktif')
+            ->whereNull('peminjaman_tanggal_kembali');
+    }
+
+    public function hasAsetSukuCadang()
+    {
+        return $this->hasMany(AsetSukuCadang::class, 'aset_suku_cadang_id_aset', 'aset_id');
+    }
+
+    public function hasSukuCadang()
+    {
+        return $this->belongsToMany(SukuCadang::class, 'aset_suku_cadang', 'aset_suku_cadang_id_aset', 'aset_suku_cadang_id_suku_cadang')->withPivot(['aset_suku_cadang_jumlah'])->withTimestamps();
+    }
+
+    public function getQrUrlAttribute(): string
+    {
+        $kode = $this->aset_kode_qr ?: $this->aset_kode;
+        return url('/aset/scan/'.trim($kode));
+    }
+
+    public function getQrValueAttribute(): string
+    {
+        return trim($this->aset_kode_qr ?: $this->aset_kode);
+    }
+
+    public function getTiketQrUrlAttribute(): string
+    {
+        $kode = $this->aset_kode_qr ?: $this->aset_kode;
+        return url('/tiket/create?aset_qr='.trim($kode));
+    }
+
+    public function getScanQrUrlAttribute(): string
+    {
+        return $this->qr_url;
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $model) {
+            if (empty($model->aset_kode_qr)) {
+                $model->aset_kode_qr = strtoupper(\Illuminate\Support\Str::random(10));
+            }
+        });
+    }
 }

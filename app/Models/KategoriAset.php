@@ -140,5 +140,14 @@ class KategoriAset extends BaseModel
         ];
     }
 
+    public function hasTeknisi()
+    {
+        return $this->belongsToMany(Teknisi::class, 'kategori_teknisi', 'kategori_id', 'teknisi_id')->withTimestamps();
+    }
+
+    public function hasKategoriTeknisi()
+    {
+        return $this->hasMany(KategoriTeknisi::class, 'kategori_id', 'aset_kategori_id');
+    }
 
 }

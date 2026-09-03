@@ -24,7 +24,16 @@
                 <x-input col="6" type="date" name="aset_tanggal_mulai_susut" />
                 <x-select col="6" name="aset_status" :options="App\Enums\Aset\StatusAsetEnum::getOptions()" />
                 <x-select col="6" name="aset_kondisi" :options="App\Enums\Aset\KondisiAsetEnum::getOptions()" />
-                <x-input col="6" name="aset_kode_qr" />
+                <div class="col-span-6">
+                    <label class="font-body-sm text-body-sm font-bold text-on-surface-variant block mb-1">Kode QR</label>
+                    <div class="flex gap-2">
+                        <input type="text" name="aset_kode_qr" value="{{ old('aset_kode_qr', $model->aset_kode_qr ?? '') }}" placeholder="Kosongkan = auto-generate" class="flex-1 h-12 px-4 bg-white border border-outline-variant rounded-lg focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none font-body-sm">
+                        @if(isset($model) && $model->exists)
+                        <a href="{{ route('aset.getQr', ['id' => $model->aset_id]) }}" class="inline-flex items-center gap-1.5 h-12 px-3 rounded-lg bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 shrink-0" title="Lihat / Print QR"><span class="material-symbols-outlined text-lg">qr_code_2</span> QR</a>
+                        @endif
+                    </div>
+                    <span class="font-label-caps text-label-caps text-on-surface-variant mt-1 block">Kosongkan = auto-generate • QR berisi URL scan detail aset</span>
+                </div>
                 <x-input col="6" type="number" step="any" name="aset_jam_pakai" />
                 <x-file
                     name="aset_foto"
@@ -38,6 +47,18 @@
                 <x-textarea col="12" name="aset_catatan" />
 
             @endbind
+        </x-card>
+
+        <x-card label="Suku Cadang Kompatibel" icon="build">
+            @php $linkedSC = $linkedSukuCadangIds ?? []; @endphp
+            <div class="col-span-12">
+                <p class="text-xs text-on-surface-variant mb-2">Pilih suku cadang yang kompatibel dengan aset ini — sinkron dengan Suku Cadang > Update.</p>
+                <select name="suku_cadang_ids[]" multiple id="select-suku_cadang_ids" class="w-full h-12 bg-transparent font-body-sm search">
+                    @foreach(App\Models\SukuCadang::orderBy('suku_cadang_nama')->get(['suku_cadang_id','suku_cadang_nama','suku_cadang_kode']) as $sc)
+                    <option value="{{ $sc->suku_cadang_id }}" {{ in_array($sc->suku_cadang_id, $linkedSC, true) ? 'selected' : '' }}>{{ $sc->suku_cadang_nama }} — {{ $sc->suku_cadang_kode }}</option>
+                    @endforeach
+                </select>
+            </div>
         </x-card>
 
         <x-card label="Custom Field Aset" icon="tune" noGrid>

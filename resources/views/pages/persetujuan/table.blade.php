@@ -26,6 +26,7 @@
             <x-slot:head>
                 <x-table-checkbox :model="$model" onchange="toggleAll(this)" />
                 <th>Actions</th>
+                <th class="text-left whitespace-nowrap">User</th>
                 @foreach ($model::$sortColumns as $column)
                 <x-table-sort field="{{ $column }}" label="{{ formatLabel($column) }}" :sortField="$sortField" :sortDir="$sortDir" />
                 @endforeach
@@ -36,8 +37,17 @@
                 <tr>
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary" />
+                    <td>{{ $table->hasUser?->name ?? ($table->persetujuan_id_user ?? '-') }}</td>
                     @foreach ($model::$sortColumns as $column)
-                    <td>{{ $table->$column }}</td>
+                    <td>
+                        @if(str_contains($column, 'tanggal') && $table->$column)
+                            {{ formatDate($table->$column) }}
+                        @elseif(str_contains($column, 'id_user') && $table->hasUser)
+                            {{ $table->hasUser->name }}
+                        @else
+                            {{ $table->$column ?? '-' }}
+                        @endif
+                    </td>
                     @endforeach
                 </tr>
                 @endforeach
@@ -61,6 +71,7 @@
                             </div>
                             <div class="mt-3">
                                 <p class="text-sm font-bold text-on-surface leading-tight line-clamp-2 break-words">{{ $table->{$model::field_name()} ?? $table->field_primary }}</p>
+                                <p class="text-xs text-on-surface-variant mt-1 truncate">{{ $table->hasUser?->name ?? '' }}</p>
                             </div>
                             <div class="grid grid-cols-2 gap-2 mt-3">
                                 @foreach(array_slice($model::$sortColumns, 0, 4) as $col)
@@ -70,9 +81,9 @@
                                         <p class="text-xs font-medium text-on-surface mt-1 truncate">
                                             @if(str_contains($col, 'tanggal') && $val)
                                                 {{ formatDate($val) }}
-                                            @elseif(str_contains($col, 'harga') || str_contains($col, 'tarif') || str_contains($col, 'total') || str_contains($col, 'biaya') || str_contains($col, 'nominal') || str_contains($col, 'harga'))
-                                                {{ is_numeric($val) ? formatRupiah($val) : ($val ?? '-') }}
-                                            @elseif(str_contains($col, 'status') || str_contains($col, 'kondisi') || str_contains($col, 'level') || str_contains($col, 'urgensi'))
+                                            @elseif(str_contains($col, 'id_user') && $table->hasUser)
+                                                {{ $table->hasUser->name }}
+                                            @elseif(str_contains($col, 'status') || str_contains($col, 'level'))
                                                 {{ $val ?? '-' }}
                                             @else
                                                 {{ Str::limit($val ?? '-', 24) }}

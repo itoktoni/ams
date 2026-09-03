@@ -33,7 +33,7 @@ class DaftarTunggu extends BaseModel
     ];
 
     public static $sortColumns = [
-        'daftar_tunggu_id',
+        'daftar_tunggu_id_aset',
         'daftar_tunggu_tanggal_mulai',
         'daftar_tunggu_durasi',
         'daftar_tunggu_status',
@@ -69,7 +69,7 @@ class DaftarTunggu extends BaseModel
 
     public function hasAset()
     {
-        return $this->hasOne(Aset::class, 'aset_id', 'daftar_tunggu_id_aset');
+        return $this->belongsTo(Aset::class, 'daftar_tunggu_id_aset', 'aset_id');
     }
 
     public function hasPeminjam()

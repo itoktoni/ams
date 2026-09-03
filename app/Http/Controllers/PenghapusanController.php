@@ -17,6 +17,11 @@ class PenghapusanController extends Controller
         $this->model = $model::getModel();
     }
 
+    protected function getData()
+    {
+        return $this->model->query()->with(['hasAset']);
+    }
+
     public function postCreate(GeneralRequest $request)
     {
         $this->handleUploads($request, ['penghapusan_foto', 'penghapusan_berita_acara'], 'penghapusan');

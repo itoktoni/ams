@@ -11,6 +11,7 @@
                 <x-input col="6" name="teknisi_kode" />
                 <x-input col="6" name="teknisi_nama" />
                 <x-input col="6" name="teknisi_telepon" />
+                <x-input col="6" name="teknisi_telegram_id" label="Telegram ID" placeholder="123456789" helper="Chat ID Telegram teknisi untuk notifikasi 1-to-1" />
                 <x-input col="6" name="teknisi_keahlian" placeholder="['elektrikal','it']" />
                 <x-input col="6" name="teknisi_zona" placeholder="['zonaiselatan','zonautara']" />
                 <x-input col="6" name="teknisi_sertifikasi" placeholder="['sertifikat-a','sertifikat-b']" />

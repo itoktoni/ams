@@ -8,8 +8,10 @@ use App\Concerns\ControllerTrait;
 use App\Http\Requests\GeneralRequest;
 use App\Models\Alert;
 use App\Models\Aset;
+use App\Models\LokasiAset;
 use App\Models\Tiket;
 use App\Services\PenugasanTeknisiService;
+use App\Services\TelegramService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -36,21 +38,37 @@ class TiketController extends Controller
             $myAsetIds = Aset::where('aset_id_penanggung_jawab', $user->id)->pluck('aset_id')->all();
             if (!empty($myAsetIds)) {
                 $asetOptions = Aset::whereIn('aset_id', $myAsetIds)->pluck('aset_nama', 'aset_id')->toArray();
-                // fallback to getOptions format if empty
                 if (empty($asetOptions)) $asetOptions = Aset::whereIn('aset_id', $myAsetIds)->get()->mapWithKeys(fn($a)=>[$a->aset_id=>$a->aset_nama.' — '.$a->aset_kode])->toArray();
             } else {
                 $asetOptions = [];
             }
         }
 
+        $lokasiMap = LokasiAset::pluck('aset_lokasi_nama', 'aset_lokasi_id')->toArray();
+        $asetLokasiMap = [];
+        foreach (Aset::pluck('aset_id_lokasi', 'aset_id') as $asetId => $lokasiId) {
+            $asetLokasiMap[$asetId] = ($lokasiId && isset($lokasiMap[$lokasiId])) ? ['id' => (string) $lokasiId, 'nama' => $lokasiMap[$lokasiId]] : null;
+        }
+
+        $qrAsetId = null;
+        $qrAsetLabel = null;
+        if (request()->filled('aset_qr')) {
+            $kode = trim(request()->input('aset_qr'));
+            $asetQr = Aset::where('aset_kode_qr', $kode)->orWhere('aset_kode', $kode)->first(['aset_id','aset_nama','aset_kode']);
+            if ($asetQr) { $qrAsetId = $asetQr->aset_id; $qrAsetLabel = $asetQr->aset_nama.' — '.$asetQr->aset_kode; }
+        }
+
         return $this->traitShare(array_merge([
-            'asetOptions' => $asetOptions,
+            'asetOptions'    => $asetOptions,
+            'asetLokasiMap'  => $asetLokasiMap,
+            'qrAsetId'       => $qrAsetId,
+            'qrAsetLabel'    => $qrAsetLabel,
         ], $data));
     }
 
     protected function getData()
     {
-        $query = $this->traitGetData();
+        $query = $this->traitGetData()->with(['hasAset', 'hasLokasi', 'hasPelapor', 'hasTeknisi']);
         $user = auth()->user();
         if ($user && in_array($user->role, ['pengguna_aset','user'], true)) {
             // pengguna hanya lihat tiket yang dia laporkan atau untuk aset miliknya
@@ -97,7 +115,22 @@ class TiketController extends Controller
             }
         }
 
-        // set default jika tidak diisi form: tanggal lapor now, jatuh tempo dari urgensi, nomor auto
+        // fallback lokasi manual (aset tanpa lokasi) — dari select manual di form
+        if (! $request->input('tiket_id_lokasi') && $request->filled('tiket_id_lokasi_manual')) {
+            $request->merge(['tiket_id_lokasi' => $request->input('tiket_id_lokasi_manual')]);
+        }
+        // fallback otomatis dari aset (non-pengguna yang tidak memilih lokasi)
+        if (! $request->input('tiket_id_lokasi') && $request->filled('tiket_id_aset')) {
+            $aset = Aset::find($request->input('tiket_id_aset'));
+            if ($aset && $aset->aset_id_lokasi) {
+                $request->merge(['tiket_id_lokasi' => $aset->aset_id_lokasi]);
+            }
+        }
+
+        // set default jika tidak diisi form: urgensi 'sedang', tanggal lapor now, jatuh tempo dari urgensi, nomor auto
+        if (! $request->input('tiket_tingkat_urgensi')) {
+            $request->merge(['tiket_tingkat_urgensi' => 'sedang']);
+        }
         if (! $request->input('tiket_tanggal_lapor')) {
             $request->merge(['tiket_tanggal_lapor' => now()]);
         }
@@ -126,6 +159,16 @@ class TiketController extends Controller
             try {
                 // coba auto-assign ke teknisi terdekat (geo)
                 $assigned = app(PenugasanTeknisiService::class)->tugaskanOtomatis($tiket, 'geo');
+                $svc = app(TelegramService::class);
+                if ($tiket->tiket_id_teknisi) {
+                    $tek = \App\Models\Teknisi::find($tiket->tiket_id_teknisi);
+                    if ($tek && $tek->teknisi_telegram_id) $svc->kirimKeTeknisi($tek, $tiket);
+                    else $svc->kirimNotifikasiTiketBaru($tiket);
+                } else {
+                    $sent = $svc->kirimKeKategori($tiket);
+                    if ($sent === 0) $svc->kirimKeSemuaTeknisi($tiket);
+                }
+
                 // buat alert untuk teknisi (atau semua teknisi jika belum ter-assign)
                 $judul = 'Tiket baru: '.($tiket->tiket_nomor ?? '#'.$tiket->tiket_id).' — '.($tiket->tiket_judul ?? '');
                 $pesan = 'Aset '.($tiket->hasAset?->aset_nama ?? '').' ('.($tiket->hasAset?->aset_kode ?? '').') dilaporkan rusak: '.($tiket->tiket_deskripsi ?? $tiket->tiket_judul ?? '').' (oleh '.($user->name ?? '').')';

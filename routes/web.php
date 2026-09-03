@@ -28,6 +28,8 @@ Route::middleware('auth')->post('/centrifugo/token', function (Request $request)
     ]);
 });
 
+// Public QR scan — no auth (PublicController)
+Route::get('/aset/scan/{kode}', [\App\Http\Controllers\PublicController::class, 'asetScan'])->name('aset.scan');
 // Public Lelang — dapat diakses tanpa login, bid butuh auth
 Route::get('/lelang', [LelangController::class, 'index'])->name('lelang.index');
 Route::get('/lelang/{id}', [LelangController::class, 'show'])->name('lelang.show');
@@ -67,11 +69,20 @@ Route::middleware(['auth', 'verified', 'access'])->group(function () {
     Route::auto('/pesanan-pembelian', 'PesananPembelianController', ['name' => 'pesanan-pembelian']);
     Route::auto('/penerimaan', 'PenerimaanController', ['name' => 'penerimaan']);
     Route::auto('/faktur', 'FakturController', ['name' => 'faktur']);
+    Route::get('/perpindahan/{id}/approve', [\App\Http\Controllers\PerpindahanController::class, 'getApprove'])->name('perpindahan.getApprove');
+    Route::get('/perpindahan/{id}/berita-acara', [\App\Http\Controllers\PerpindahanController::class, 'getBeritaAcara'])->name('perpindahan.getBeritaAcara');
+    Route::get('/aset/{id}/qr', [\App\Http\Controllers\AsetController::class, 'getQr'])->name('aset.getQr');
+    Route::get('/aset/{id}/qr-print', [\App\Http\Controllers\AsetController::class, 'getQrPrint'])->name('aset.getQrPrint');
+    Route::post('/opname/{id}/scan', [\App\Http\Controllers\OpnameController::class, 'postScan'])->name('opname.postScan');
+    Route::get('/opname/{id}/report', [\App\Http\Controllers\OpnameController::class, 'getReport'])->name('opname.getReport');
+    Route::get('/opname/{id}/report-print', [\App\Http\Controllers\OpnameController::class, 'getReportPrint'])->name('opname.getReportPrint');
     // Suku Cadang
+    Route::auto('/department', 'DepartmentController', ['name' => 'department']);
     Route::auto('/gudang', 'GudangController', ['name' => 'gudang']);
     Route::auto('/suku-cadang', 'SukuCadangController', ['name' => 'suku-cadang']);
     Route::auto('/stok-suku-cadang', 'StokSukuCadangController', ['name' => 'stok-suku-cadang']);
     Route::auto('/pergerakan-stok', 'PergerakanStokController', ['name' => 'pergerakan-stok']);
+    Route::auto('/permintaan-suku-cadang', 'PermintaanSukuCadangController', ['name' => 'permintaan-suku-cadang']);
     // Service
     Route::auto('/template-service', 'TemplateServiceController', ['name' => 'template-service']);
     Route::auto('/jadwal-service', 'JadwalServiceController', ['name' => 'jadwal-service']);

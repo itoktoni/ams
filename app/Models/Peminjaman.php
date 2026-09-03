@@ -43,7 +43,6 @@ class Peminjaman extends BaseModel
     ];
 
     public static $sortColumns = [
-        'peminjaman_id',
         'peminjaman_nomor',
         'peminjaman_tanggal_pinjam',
         'peminjaman_jatuh_tempo',
@@ -101,6 +100,7 @@ class Peminjaman extends BaseModel
     {
         return $this->hasOne(Aset::class, 'aset_id', 'peminjaman_id_aset');
     }
+
 
     public function hasPeminjam()
     {

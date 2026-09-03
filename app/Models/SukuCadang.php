@@ -96,6 +96,16 @@ class SukuCadang extends BaseModel
         return $this->hasOne(Gudang::class, 'gudang_id', 'suku_cadang_id_gudang');
     }
 
+    public function hasAsetSukuCadang()
+    {
+        return $this->hasMany(AsetSukuCadang::class, 'aset_suku_cadang_id_suku_cadang', 'suku_cadang_id');
+    }
+
+    public function hasAset()
+    {
+        return $this->belongsToMany(Aset::class, 'aset_suku_cadang', 'aset_suku_cadang_id_suku_cadang', 'aset_suku_cadang_id_aset')->withPivot(['aset_suku_cadang_jumlah'])->withTimestamps();
+    }
+
     public function getSukuCadangFotoUrlAttribute(): string
     {
         return fileUrl($this->suku_cadang_foto);

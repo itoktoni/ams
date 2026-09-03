@@ -99,7 +99,7 @@
                                 </td>
                                 <td class="py-3 pr-3 font-medium">
                                     {{ $o->penawaran_penjualan_nama_pembeli }}
-                                    @if($o->hasUser) <span class="text-[11px] text-on-surface-variant block">{{ $o->hasUser->email }}</span> @endif
+                                    @if($o->has_user) <span class="text-[11px] text-on-surface-variant block">{{ $o->has_user->email }}</span> @endif
                                 </td>
                                 <td class="py-3 pr-3 text-on-surface-variant text-xs">{{ $o->penawaran_penjualan_kontak ?? '—' }}</td>
                                 <td class="py-3 pr-3 text-right font-bold {{ $idx===0?'text-warning':'' }}">Rp {{ number_format($o->penawaran_penjualan_harga, 0, ',', '.') }}</td>

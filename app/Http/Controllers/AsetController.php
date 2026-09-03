@@ -6,11 +6,15 @@ use App\Concerns\ControllerTrait;
 use App\Http\Requests\GeneralRequest;
 use App\Models\Aset;
 use App\Models\BukuPenyusutan;
+use App\Models\JadwalService;
 use App\Models\KategoriAset;
+use App\Models\RiwayatService;
+use App\Models\Tiket;
 use App\Models\User;
 use App\Services\PenyusutanService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Response;
 
 class AsetController extends Controller
 {
@@ -29,16 +33,19 @@ class AsetController extends Controller
     {
         return $this->views($this->template(), [
             'kategoriFields' => $this->kategoriFields(),
+            'linkedSukuCadangIds' => [],
         ]);
     }
 
     public function getUpdate(GeneralRequest $request, $id)
     {
         $data = $this->model->findOrFail($id);
+        $linkedSukuCadangIds = \App\Models\AsetSukuCadang::where('aset_suku_cadang_id_aset', $data->aset_id)->pluck('aset_suku_cadang_id_suku_cadang')->all();
 
         return $this->views($this->template(), [
             'model' => $data,
             'kategoriFields' => $this->kategoriFields(),
+            'linkedSukuCadangIds' => $linkedSukuCadangIds,
         ]);
     }
 
@@ -62,16 +69,35 @@ class AsetController extends Controller
     public function postCreate(GeneralRequest $request)
     {
         $this->handleUploads($request, ['aset_foto'], 'aset');
-
-        return $this->traitPostCreate($request);
+        $response = $this->traitPostCreate($request);
+        if (! empty($response['data']) && $response['data'] instanceof \App\Models\Aset) {
+            $this->syncSukuCadang($response['data']->aset_id, $request->input('suku_cadang_ids', []));
+        } elseif (is_object($response) && method_exists($response, 'getData')) {
+            $data = $response->getData(true);
+            if (! empty($data['data']['aset_id'])) $this->syncSukuCadang($data['data']['aset_id'], $request->input('suku_cadang_ids', []));
+        }
+        return $response;
     }
 
     public function postUpdate(GeneralRequest $request, $id)
     {
         $m = $this->model->findOrFail($id);
         $this->handleUploads($request, ['aset_foto'], 'aset', $m->toArray());
+        $response = $this->traitPostUpdate($request, $id);
+        $this->syncSukuCadang((int) $id, $request->input('suku_cadang_ids', []));
+        return $response;
+    }
 
-        return $this->traitPostUpdate($request, $id);
+    private function syncSukuCadang(int $asetId, array $scIds): void
+    {
+        $scIds = array_filter(array_map('intval', $scIds));
+        $existing = \App\Models\AsetSukuCadang::where('aset_suku_cadang_id_aset', $asetId)->pluck('aset_suku_cadang_id_suku_cadang')->all();
+        $toDelete = array_diff($existing, $scIds);
+        $toInsert = array_diff($scIds, $existing);
+        if ($toDelete) \App\Models\AsetSukuCadang::where('aset_suku_cadang_id_aset', $asetId)->whereIn('aset_suku_cadang_id_suku_cadang', $toDelete)->delete();
+        foreach ($toInsert as $sid) {
+            \App\Models\AsetSukuCadang::firstOrCreate(['aset_suku_cadang_id_aset' => $asetId, 'aset_suku_cadang_id_suku_cadang' => $sid], ['aset_suku_cadang_jumlah' => 1]);
+        }
     }
 
     protected function handleUploads(GeneralRequest $request, array $fields, string $folder, ?array $existing = null): void
@@ -89,7 +115,7 @@ class AsetController extends Controller
 
     protected function getData()
     {
-        $query = $this->traitGetData();
+        $query = $this->traitGetData()->with(['hasKategori', 'hasLokasi', 'hasPeminjamanAktif']);
 
         $user = auth()->user();
         if (! $user) return $query;
@@ -122,6 +148,44 @@ class AsetController extends Controller
         $filename = 'BA-'.$aset->aset_kode.'-'.$penerima->id.'.pdf';
 
         return $pdf->download($filename);
+    }
+
+    public function getQr(\Illuminate\Http\Request $request, $id)
+    {
+        $aset = $this->model->findOrFail($id);
+        if (empty($aset->aset_kode_qr)) {
+            $aset->update(['aset_kode_qr' => strtoupper(\Illuminate\Support\Str::random(10))]);
+            $aset->refresh();
+        }
+        $qrText = $aset->qr_url;
+        $qrDataUri = $this->qrDataUri($qrText, 300);
+        return view('pages.aset.qr', ['aset' => $aset, 'qrText' => $qrText, 'qrDataUri' => $qrDataUri, 'model' => $aset]);
+    }
+
+    public function getQrPrint(\Illuminate\Http\Request $request, $id)
+    {
+        $aset = $this->model->findOrFail($id);
+        if (empty($aset->aset_kode_qr)) {
+            $aset->update(['aset_kode_qr' => strtoupper(\Illuminate\Support\Str::random(10))]);
+            $aset->refresh();
+        }
+        $qrText = $aset->qr_url;
+        $qrDataUri = $this->qrDataUri($qrText, 400);
+        $pdf = Pdf::loadView('pdf.qr-aset', ['aset' => $aset, 'qrText' => $qrText, 'qrDataUri' => $qrDataUri])->setPaper('A4', 'portrait');
+        return $pdf->download('QR-'.$aset->aset_kode.'.pdf');
+    }
+
+    private function qrDataUri(string $text, int $size = 300): string
+    {
+        try {
+            $renderer = new \BaconQrCode\Renderer\ImageRenderer(new \BaconQrCode\Renderer\RendererStyle\RendererStyle($size), new \BaconQrCode\Renderer\Image\SvgImageBackEnd());
+            $writer = new \BaconQrCode\Writer($renderer);
+            $svg = $writer->writeString($text);
+            return 'data:image/svg+xml;base64,'.base64_encode($svg);
+        } catch (\Throwable $e) {
+            $url = 'https://api.qrserver.com/v1/create-qr-code/?size='.$size.'x'.$size.'&data='.urlencode($text);
+            return $url;
+        }
     }
 
     /**

@@ -32,7 +32,7 @@
 
   <table class="meta">
     <tr><td>Kode / Nama Aset</td><td>: <strong>{{ $aset->aset_kode }}</strong> — {{ $aset->aset_nama }}</td></tr>
-    <tr><td>Kategori / Lokasi</td><td>: {{ $aset->hasKategori?->aset_kategori_nama ?? '-' }} / {{ $aset->hasLokasi?->aset_lokasi_nama ?? '-' }}</td></tr>
+    <tr><td>Kategori / Lokasi</td><td>: {{ $aset->has_kategori?->aset_kategori_nama ?? '-' }} / {{ $aset->has_lokasi?->aset_lokasi_nama ?? '-' }}</td></tr>
     <tr><td>Merek / Model / SN</td><td>: {{ $aset->aset_merek ?? '-' }} / {{ $aset->aset_model ?? '-' }} / {{ $aset->aset_nomor_seri ?? '-' }}</td></tr>
     <tr><td>Harga Perolehan / Sisa</td><td>: {{ formatRupiah($aset->aset_harga_perolehan) }} / {{ formatRupiah($aset->aset_nilai_sisa) }}</td></tr>
     <tr><td>Tgl Perolehan / Masa</td><td>: {{ $aset->aset_tanggal_perolehan ? formatDate($aset->aset_tanggal_perolehan) : '-' }} — {{ $aset->aset_masa_manfaat }} bulan ({{ round($aset->aset_masa_manfaat/12,1) }} th) • {{ $aset->aset_metode_penyusutan ?? '-' }}</td></tr>

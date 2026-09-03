@@ -18,6 +18,19 @@
                 <x-input col="6" type="number" step="0.01" name="suku_cadang_bin_aktif" />
                 <x-input col="6" type="number" step="0.01" name="suku_cadang_bin_buffer" />
                 <x-textarea col="12" name="suku_cadang_spesifikasi" />
+
+                {{-- Link ke Aset (compatible / BOM) --}}
+                @php $linked = $linkedAsetIds ?? []; @endphp
+                <div class="col-span-12">
+                    <label class="font-body-sm text-body-sm font-bold text-on-surface-variant block mb-1">Aset Kompatibel</label>
+                    <p class="text-xs text-on-surface-variant mb-2">Pilih aset yang kompatibel dengan suku cadang ini — akan tampil di Aset > Update juga.</p>
+                    <select name="aset_ids[]" multiple id="select-aset_ids" class="w-full h-12 bg-transparent font-body-sm search">
+                        @foreach(App\Models\Aset::orderBy('aset_nama')->get(['aset_id','aset_nama','aset_kode']) as $a)
+                        <option value="{{ $a->aset_id }}" {{ in_array($a->aset_id, $linked, true) ? 'selected' : '' }}>{{ $a->aset_nama }} — {{ $a->aset_kode }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <x-file
                     name="suku_cadang_foto"
                     label="Foto Suku Cadang"

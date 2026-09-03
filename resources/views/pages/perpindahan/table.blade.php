@@ -26,6 +26,7 @@
             <x-slot:head>
                 <x-table-checkbox :model="$model" onchange="toggleAll(this)" />
                 <th>Actions</th>
+                <th class="text-left whitespace-nowrap">Aset</th>
                 @foreach ($model::$sortColumns as $column)
                 <x-table-sort field="{{ $column }}" label="{{ formatLabel($column) }}" :sortField="$sortField" :sortDir="$sortDir" />
                 @endforeach
@@ -36,8 +37,17 @@
                 <tr>
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary" />
+                    <td class="min-w-[160px]">{{ $table->hasAset?->aset_nama ? $table->hasAset->aset_nama.' — '.$table->hasAset->aset_kode : ($table->perpindahan_id_aset ?? '-') }}</td>
                     @foreach ($model::$sortColumns as $column)
-                    <td>{{ $table->$column }}</td>
+                    <td>
+                        @if(str_contains($column, 'tanggal') && $table->$column)
+                            {{ formatDate($table->$column) }}
+                        @elseif(str_contains($column, 'id_aset') && $table->hasAset)
+                            {{ $table->hasAset->aset_nama }} — {{ $table->hasAset->aset_kode }}
+                        @else
+                            {{ $table->$column ?? '-' }}
+                        @endif
+                    </td>
                     @endforeach
                 </tr>
                 @endforeach
@@ -61,6 +71,7 @@
                             </div>
                             <div class="mt-3">
                                 <p class="text-sm font-bold text-on-surface leading-tight line-clamp-2 break-words">{{ $table->{$model::field_name()} ?? $table->field_primary }}</p>
+                                <p class="text-xs text-on-surface-variant mt-1 truncate">{{ $table->hasAset?->aset_nama ? $table->hasAset->aset_nama.' — '.$table->hasAset->aset_kode : ($table->perpindahan_id_aset ?? '') }}</p>
                             </div>
                             <div class="grid grid-cols-2 gap-2 mt-3">
                                 @foreach(array_slice($model::$sortColumns, 0, 4) as $col)
@@ -70,7 +81,9 @@
                                         <p class="text-xs font-medium text-on-surface mt-1 truncate">
                                             @if(str_contains($col, 'tanggal') && $val)
                                                 {{ formatDate($val) }}
-                                            @elseif(str_contains($col, 'harga') || str_contains($col, 'tarif') || str_contains($col, 'total') || str_contains($col, 'biaya') || str_contains($col, 'nominal') || str_contains($col, 'harga'))
+                                            @elseif(str_contains($col, 'id_aset') && $table->hasAset)
+                                                {{ $table->hasAset->aset_nama }}
+                                            @elseif(str_contains($col, 'harga') || str_contains($col, 'tarif') || str_contains($col, 'total') || str_contains($col, 'biaya') || str_contains($col, 'nominal'))
                                                 {{ is_numeric($val) ? formatRupiah($val) : ($val ?? '-') }}
                                             @elseif(str_contains($col, 'status') || str_contains($col, 'kondisi') || str_contains($col, 'level') || str_contains($col, 'urgensi'))
                                                 {{ $val ?? '-' }}

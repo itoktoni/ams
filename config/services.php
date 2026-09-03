@@ -55,4 +55,9 @@ return [
         'api_key' => env('PEXELS_API_KEY'),
     ],
 
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        // group tujuan notifikasi (fallback ke TELEGRAM_CHAT_ID jika group tidak diset)
+        'group_id' => env('TELEGRAM_GROUP_ID', env('TELEGRAM_CHAT_ID')),
+    ],
 ];

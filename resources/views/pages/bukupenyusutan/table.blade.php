@@ -69,11 +69,14 @@
             $sortDir = str_contains($currentSort, ':desc') ? 'desc' : 'asc';
         @endphp
 
+        @php $canAct = auth()->user()?->can('update', $model) || auth()->user()?->can('delete', $model); @endphp
         <x-table>
             <x-slot:head>
+                @if($canAct)
                 <x-table-checkbox :model="$model" onchange="toggleAll(this)" />
                 <th>Actions</th>
                 <th class="text-left whitespace-nowrap">Aset</th>
+                @endif
                 @foreach ($model::$sortColumns as $column)
                 <x-table-sort field="{{ $column }}" label="{{ formatLabel($column) }}" :sortField="$sortField" :sortDir="$sortDir" />
                 @endforeach
@@ -82,6 +85,7 @@
             <x-slot:body>
                 @foreach($data as $table)
                 <tr>
+                    @if($canAct)
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary" />
                     <td class="min-w-[160px]">
@@ -95,6 +99,7 @@
                             <span class="text-on-surface-variant">#{{ $table->buku_penyusutan_id_aset }}</span>
                         @endif
                     </td>
+                    @endif
                     @foreach ($model::$sortColumns as $column)
                         @if (in_array($column, ['buku_penyusutan_nilai','buku_penyusutan_akumulasi','buku_penyusutan_nilai_buku']))
                             <td class="text-right tabular-nums">{{ formatRupiah($table->$column) }}</td>

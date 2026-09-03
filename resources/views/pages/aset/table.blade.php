@@ -35,26 +35,41 @@
                 @foreach($data as $table)
                 <tr>
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
-                    <x-table-action :model="$model" :id="$table->field_primary">
-                        @can('beritaAcara', $model)
-                        <a href="{{ route('aset.getBeritaAcara', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="Cetak Berita Acara">
-                            <span class="material-symbols-outlined text-lg">print</span>
-                        </a>
-                        @endcan
-                        <a href="{{ route('dokumen-aset.getTable') }}?filters[aset_dokumen_id_aset][$eq]={{ $table->field_primary }}" wire:navigate class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-info/10 text-info hover:bg-info/20 transition-colors" title="Dokumen Terkait">
-                            <span class="material-symbols-outlined text-lg">description</span>
-                        </a>
-                        @can('table', app(\App\Models\BukuPenyusutan::class))
-                        <a href="{{ route('buku-penyusutan.getTable') }}?filters[buku_penyusutan_id_aset][$eq]={{ $table->field_primary }}" wire:navigate class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-warning/10 text-warning hover:bg-warning/20 transition-colors" title="Detail Penyusutan">
-                            <span class="material-symbols-outlined text-lg">trending_down</span>
-                        </a>
-                        @endcan
-                        @can('recalc', $model)
-                        <a href="{{ route('aset.getRecalc', ['id' => $table->field_primary]) }}" onclick="return confirm('Hapus kalkulasi lama & hitung ulang dari awal s/d bulan ini?')" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-success/10 text-success hover:bg-success/20 transition-colors" title="Kalkulasi Ulang">
-                            <span class="material-symbols-outlined text-lg">calculate</span>
-                        </a>
-                        @endcan
-                    </x-table-action>
+                    <td class="p-1.5 align-middle">
+                        <div class="grid grid-cols-3 gap-1.5 w-[108px]">
+                            @can('update', $model)
+                            <a href="{{ moduleRoute('getUpdate', ['id' => $table->field_primary]) }}" wire:navigate class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="Edit">
+                                <span class="material-symbols-outlined text-lg">edit</span>
+                            </a>
+                            @endcan
+                            @can('delete', $model)
+                            <a onclick="return confirm('Are you sure you want to delete?')" href="{{ moduleRoute('getDelete', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-error/10 text-error hover:bg-error/20 transition-colors" title="Hapus">
+                                <span class="material-symbols-outlined text-lg">delete</span>
+                            </a>
+                            @endcan
+                            @can('beritaAcara', $model)
+                            <a href="{{ route('aset.getBeritaAcara', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="Cetak Berita Acara">
+                                <span class="material-symbols-outlined text-lg">print</span>
+                            </a>
+                            @endcan
+                            <a href="{{ route('aset.getQr', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-800 text-white hover:bg-black transition-colors" title="QR Code">
+                                <span class="material-symbols-outlined text-lg">qr_code_2</span>
+                            </a>
+                            <a href="{{ route('dokumen-aset.getTable') }}?filters[aset_dokumen_id_aset][$eq]={{ $table->field_primary }}" wire:navigate class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-info/10 text-info hover:bg-info/20 transition-colors" title="Dokumen Terkait">
+                                <span class="material-symbols-outlined text-lg">description</span>
+                            </a>
+                            @can('table', app(\App\Models\BukuPenyusutan::class))
+                            <a href="{{ route('buku-penyusutan.getTable') }}?filters[buku_penyusutan_id_aset][$eq]={{ $table->field_primary }}" wire:navigate class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-warning/10 text-warning hover:bg-warning/20 transition-colors" title="Detail Penyusutan">
+                                <span class="material-symbols-outlined text-lg">trending_down</span>
+                            </a>
+                            @endcan
+                            @can('recalc', $model)
+                            <a href="{{ route('aset.getRecalc', ['id' => $table->field_primary]) }}" onclick="return confirm('Hapus kalkulasi lama & hitung ulang dari awal s/d bulan ini?')" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-success/10 text-success hover:bg-success/20 transition-colors" title="Kalkulasi Ulang">
+                                <span class="material-symbols-outlined text-lg">calculate</span>
+                            </a>
+                            @endcan
+                        </div>
+                    </td>
                     @foreach ($model::$sortColumns as $column)
                         @if ($column === 'aset_harga_perolehan')
                             <td class="text-right">{{ formatAngka((float) $table->$column) }}</td>
@@ -63,7 +78,27 @@
                         @elseif ($column === 'aset_kondisi')
                             <td>{{ $table->$column ? KondisiAsetEnum::getDescription($table->$column) : '-' }}</td>
                         @elseif ($column === 'aset_status')
-                            <td>{{ $table->$column ? StatusAsetEnum::getDescription($table->$column) : '-' }}</td>
+                            <td>
+                                @php
+                                    $sedangDipinjam = (bool) $table->has_peminjaman_aktif;
+                                    $availColors = [
+                                        'aktif'     => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                        'dipinjam'  => 'bg-amber-50 text-amber-700 border-amber-200',
+                                        'maintenance' => 'bg-orange-50 text-orange-700 border-orange-200',
+                                        'rusak'     => 'bg-red-50 text-red-700 border-red-200',
+                                        'dihapus'   => 'bg-gray-100 text-gray-600 border-gray-200',
+                                        'afkir'     => 'bg-gray-100 text-gray-600 border-gray-200',
+                                    ];
+                                    if ($sedangDipinjam) {
+                                        $statusLabel = 'Dipinjam';
+                                        $sc = 'bg-amber-50 text-amber-700 border-amber-200';
+                                    } else {
+                                        $statusLabel = $table->$column ? StatusAsetEnum::getDescription($table->$column) : '-';
+                                        $sc = $availColors[$table->$column] ?? 'bg-gray-100 text-gray-600 border-gray-200';
+                                    }
+                                @endphp
+                                <span class="inline-flex items-center text-[11px] font-semibold rounded-full px-2 py-0.5 border {{ $sc }}">{{ $statusLabel }}</span>
+                            </td>
                         @else
                             <td>{{ $table->$column }}</td>
                         @endif
@@ -78,13 +113,21 @@
                     @foreach($data as $table)
                     @php
                         $fotoUrl = $table->aset_foto ? fileUrl($table->aset_foto) : '';
-                        $statusCfg = match($table->aset_status){
-                            'aktif' => ['Aktif','bg-emerald-500','bg-emerald-50 text-emerald-700 border-emerald-200'],
-                            'dipinjam' => ['Dipinjam','bg-amber-500','bg-amber-50 text-amber-700 border-amber-200'],
-                            'maintenance' => ['Maintenance','bg-sky-500','bg-sky-50 text-sky-700 border-sky-200'],
-                            'rusak' => ['Rusak','bg-red-500','bg-red-50 text-red-700 border-red-200'],
-                            default => [$table->aset_status ? StatusAsetEnum::getDescription($table->aset_status) : '-', 'bg-zinc-400','bg-zinc-50 text-zinc-600 border-zinc-200']
-                        };
+                        // availability nyata: cek peminjaman aktif (relasi hasPeminjamanAktif)
+                        $sedangDipinjam = (bool) $table->has_peminjaman_aktif;
+                        if ($sedangDipinjam) {
+                            $statusCfg = ['Dipinjam', 'bg-amber-500', 'bg-amber-50 text-amber-700 border-amber-200'];
+                        } else {
+                            $statusCfg = match($table->aset_status){
+                                'aktif' => ['Tersedia', 'bg-emerald-500', 'bg-emerald-50 text-emerald-700 border-emerald-200'],
+                                'maintenance' => ['Maintenance', 'bg-sky-500', 'bg-sky-50 text-sky-700 border-sky-200'],
+                                'rusak' => ['Rusak', 'bg-red-500', 'bg-red-50 text-red-700 border-red-200'],
+                                'dipinjam' => ['Dipinjam', 'bg-amber-500', 'bg-amber-50 text-amber-700 border-amber-200'],
+                                'dihapus' => ['Dihapus', 'bg-zinc-400', 'bg-zinc-50 text-zinc-600 border-zinc-200'],
+                                'afkir' => ['Afkir', 'bg-zinc-400', 'bg-zinc-50 text-zinc-600 border-zinc-200'],
+                                default => [$table->aset_status ? StatusAsetEnum::getDescription($table->aset_status) : '-', 'bg-zinc-400', 'bg-zinc-50 text-zinc-600 border-zinc-200']
+                            };
+                        }
                         $kondisiLabel = $table->aset_kondisi ? KondisiAsetEnum::getDescription($table->aset_kondisi) : '-';
                     @endphp
                     <div class="bg-white rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden" data-id="{{ $table->field_primary }}" onclick="mToggle(this)">

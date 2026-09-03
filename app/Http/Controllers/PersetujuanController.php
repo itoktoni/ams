@@ -13,4 +13,9 @@ class PersetujuanController extends Controller
     {
         $this->model = $model::getModel();
     }
+
+    protected function getData()
+    {
+        return $this->model->query()->with(['hasUser']);
+    }
 }

@@ -29,6 +29,25 @@
             </button>
         </x-card>
 
+        <x-card label="Teknisi Terkait" icon="engineering">
+            @php $linkedTek = $linkedTeknisiIds ?? []; @endphp
+            <div class="col-span-12">
+                <p class="text-xs text-on-surface-variant mb-2">Pilih teknisi yang menangani kategori ini — tiket untuk aset kategori ini akan ternotif ke mereka via Telegram.</p>
+                <select name="teknisi_ids[]" multiple id="select-teknisi_ids" class="w-full h-12 bg-transparent font-body-sm search">
+                    @foreach(App\Models\Teknisi::orderBy('teknisi_nama')->get(['teknisi_id','teknisi_nama','teknisi_kode']) as $tek)
+                    <option value="{{ $tek->teknisi_id }}" {{ in_array($tek->teknisi_id, $linkedTek, true) ? 'selected' : '' }}>{{ $tek->teknisi_nama }} — {{ $tek->teknisi_kode }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @if(!empty($linkedTek))
+            <div class="col-span-12 mt-2 flex flex-wrap gap-1.5">
+                @foreach(App\Models\Teknisi::whereIn('teknisi_id', $linkedTek)->get(['teknisi_nama','teknisi_kode']) as $tek)
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">{{ $tek->teknisi_nama }} ({{ $tek->teknisi_kode }})</span>
+                @endforeach
+            </div>
+            @endif
+        </x-card>
+
         <x-action :model="$model" :action="['save']"/>
     </x-form>
 

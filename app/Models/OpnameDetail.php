@@ -12,11 +12,8 @@ class OpnameDetail extends BaseModel
     use DefaultEntity, Filterable, OptionTrait, Sortable;
 
     protected $table = 'opname_detail';
-
     protected $primaryKey = 'opname_detail_id';
-
     protected $keyType = 'int';
-
     public $incrementing = true;
 
     protected $fillable = [
@@ -26,20 +23,19 @@ class OpnameDetail extends BaseModel
         'opname_detail_status_fisik',
         'opname_detail_kondisi',
         'opname_detail_ditemukan',
+        'opname_detail_waktu_scan',
+        'opname_detail_id_petugas_scan',
         'opname_detail_catatan',
     ];
 
     public static $filterColumns = [];
-
-    public static $sortColumns = [
-        'opname_detail_id',
-        'opname_detail_id_aset',
-    ];
+    public static $sortColumns = ['opname_detail_id', 'opname_detail_id_aset'];
 
     protected function casts(): array
     {
         return [
             'opname_detail_ditemukan' => 'boolean',
+            'opname_detail_waktu_scan' => 'datetime',
         ];
     }
 
@@ -57,6 +53,8 @@ class OpnameDetail extends BaseModel
             'opname_detail_status_fisik' => 'nullable|string|max:255',
             'opname_detail_kondisi' => 'nullable|string|max:255',
             'opname_detail_ditemukan' => 'boolean',
+            'opname_detail_waktu_scan' => 'nullable|date',
+            'opname_detail_id_petugas_scan' => 'nullable|integer',
             'opname_detail_catatan' => 'nullable|string',
         ];
     }
@@ -69,5 +67,10 @@ class OpnameDetail extends BaseModel
     public function hasAset()
     {
         return $this->hasOne(Aset::class, 'aset_id', 'opname_detail_id_aset');
+    }
+
+    public function hasPetugasScan()
+    {
+        return $this->hasOne(User::class, 'id', 'opname_detail_id_petugas_scan');
     }
 }

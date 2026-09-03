@@ -22,7 +22,7 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * @mixin IdeHelperUser
  */
-#[Fillable(['name', 'email', 'password', 'role', 'phone', 'avatar', 'verified_at'])]
+#[Fillable(['name', 'email', 'password', 'role', 'phone', 'telegram_id', 'telegram_username', 'avatar', 'verified_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -126,6 +126,11 @@ class User extends Authenticatable
     public function isSupervisor(): bool
     {
         return $this->role === 'supervisor';
+    }
+
+    public function hasDepartment()
+    {
+        return $this->hasOne(Department::class, 'department_id', 'department_id');
     }
 
     public function isCustomer(): bool

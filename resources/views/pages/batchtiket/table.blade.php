@@ -37,7 +37,17 @@
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary" />
                     @foreach ($model::$sortColumns as $column)
-                    <td>{{ $table->$column }}</td>
+                    <td>
+                        @if(str_contains($column, 'tanggal') && $table->$column)
+                            {{ formatDate($table->$column) }}
+                        @elseif(str_contains($column, 'id_teknisi') && $table->hasTeknisi)
+                            {{ $table->hasTeknisi->teknisi_nama ?? $table->hasTeknisi->name ?? $table->$column }}
+                        @elseif(str_contains($column, 'harga') || str_contains($column, 'total') || str_contains($column, 'biaya') || str_contains($column, 'nominal'))
+                            {{ is_numeric($table->$column) ? formatRupiah($table->$column) : ($table->$column ?? '-') }}
+                        @else
+                            {{ $table->$column ?? '-' }}
+                        @endif
+                    </td>
                     @endforeach
                 </tr>
                 @endforeach

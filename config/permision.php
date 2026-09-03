@@ -53,6 +53,7 @@ $restrict['supervisor'] = [
     'buku-penyusutan' => false,
     'teknisi' => false,
     'vendor' => false,
+    'department' => ['create' => false, 'delete' => false],
     'gudang' => false,
 ];
 
@@ -77,6 +78,7 @@ $restrict['teknisi'] = [
     'penerimaan' => false,
     'faktur' => false,
     'gudang' => false,
+    'department' => false,
     'stok-suku-cadang' => false,
     'pergerakan-stok' => false,
     'penjualan-aset' => false,
@@ -87,7 +89,7 @@ $restrict['teknisi'] = [
     'peminjaman' => false,
     'daftar-tunggu' => false,
     'reputasi-peminjam' => false,
-    // boleh: tiket, batch-tiket, teknisi (self), aset (view), alert
+    // boleh: tiket, batch-tiket, teknisi (self), aset (view), alert, permintaan-suku-cadang
 ];
 
 // ── PENGGUNA ASET (karyawan): pakai aset + pinjam + lihat dokumen — hanya lihat aset yang di-assign, tidak boleh edit/hapus/recalc
@@ -106,6 +108,7 @@ $restrict['pengguna_aset'] = [
     'lokasi-aset' => false,
     'kelompok-penyusutan' => false,
     'teknisi' => false,
+    'department' => false,
     'batch-tiket' => false,
     'tiket' => ['delete' => false], // boleh lihat & buat tiket kerusakan untuk aset sendiri
     'alert' => false,
@@ -118,12 +121,14 @@ $restrict['pengguna_aset'] = [
     'penerimaan' => false,
     'faktur' => false,
     'gudang' => false,
+    'suku-cadang' => false,
     'stok-suku-cadang' => false,
     'pergerakan-stok' => false,
     'template-service' => false,
     'jadwal-service' => false,
     'riwayat-service' => false,
     'penjualan-aset' => false,
+    'permintaan-suku-cadang' => ['delete' => false],
     // aset & buku: hanya boleh table/show + beritaAcara, tidak boleh create/update/delete/recalc (detail buku tetap boleh lihat untuk aset sendiri)
     'aset' => ['create' => false, 'update' => false, 'delete' => false, 'recalc' => false],
     'buku-penyusutan' => ['create' => false, 'update' => false, 'delete' => false],
@@ -166,6 +171,7 @@ $restrict['customer'] = [
     'penerimaan' => false,
     'faktur' => false,
     'gudang' => false,
+    'department' => false,
     'suku-cadang' => false,
     'stok-suku-cadang' => false,
     'pergerakan-stok' => false,
@@ -173,6 +179,7 @@ $restrict['customer'] = [
     'jadwal-service' => false,
     'riwayat-service' => false,
     'penjualan-aset' => false,
+    'permintaan-suku-cadang' => false,
     // lelang.* tidak di-restrict (public), biar lolos
 ];
 
@@ -183,6 +190,7 @@ $restrict['user'] = [
     'section' => false,
     'user' => false,
     'settings.env' => false,
+    'buku-penyusutan' => ['create' => false, 'update' => false, 'delete' => false],
 ];
 $restrict['editor'] = [
     'cms-type' => false,

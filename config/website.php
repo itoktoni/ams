@@ -12,9 +12,9 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'KIRO AMS'),
 
-    'tagline' => env('WEBSITE_TAGLINE', 'Web Application'),
+    'tagline' => env('WEBSITE_TAGLINE', 'Asset Management System'),
 
     'description' => env('WEBSITE_DESCRIPTION', 'A powerful web application built with Laravel.'),
 

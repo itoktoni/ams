@@ -37,7 +37,7 @@ return [
             'items' => [
                 ['route' => 'teknisi.getTable', 'icon' => 'engineering', 'label' => 'Teknisi', 'match' => ['teknisi.*']],
                 ['route' => 'tiket.getTable', 'icon' => 'confirmation_number', 'label' => 'Tiket', 'match' => ['tiket.*']],
-                ['route' => 'batch-tiket.getTable', 'icon' => 'view_agenda', 'label' => 'Batch Tiket', 'match' => ['batch-tiket.*']],
+                // ['route' => 'batch-tiket.getTable', 'icon' => 'view_agenda', 'label' => 'Batch Tiket', 'match' => ['batch-tiket.*']],
             ],
         ],
         [
@@ -51,7 +51,7 @@ return [
             'items' => [
                 ['route' => 'peminjaman.getTable', 'icon' => 'swap_horiz', 'label' => 'Peminjaman', 'match' => ['peminjaman.*']],
                 ['route' => 'daftar-tunggu.getTable', 'icon' => 'hourglass_top', 'label' => 'Daftar Tunggu', 'match' => ['daftar-tunggu.*']],
-                ['route' => 'reputasi-peminjam.getTable', 'icon' => 'star', 'label' => 'Reputasi Peminjam', 'match' => ['reputasi-peminjam.*']],
+                // ['route' => 'reputasi-peminjam.getTable', 'icon' => 'star', 'label' => 'Reputasi Peminjam', 'match' => ['reputasi-peminjam.*']],
             ],
         ],
         [
@@ -75,10 +75,12 @@ return [
         [
             'label' => 'Suku Cadang',
             'items' => [
+                ['route' => 'department.getTable', 'icon' => 'apartment', 'label' => 'Department', 'match' => ['department.*']],
                 ['route' => 'gudang.getTable', 'icon' => 'warehouse', 'label' => 'Gudang', 'match' => ['gudang.*']],
                 ['route' => 'suku-cadang.getTable', 'icon' => 'build', 'label' => 'Suku Cadang', 'match' => ['suku-cadang.*']],
                 ['route' => 'stok-suku-cadang.getTable', 'icon' => 'layers', 'label' => 'Stok Suku Cadang', 'match' => ['stok-suku-cadang.*']],
                 ['route' => 'pergerakan-stok.getTable', 'icon' => 'sync', 'label' => 'Pergerakan Stok', 'match' => ['pergerakan-stok.*']],
+                ['route' => 'permintaan-suku-cadang.getTable', 'icon' => 'inventory_2', 'label' => 'Permintaan Suku Cadang', 'match' => ['permintaan-suku-cadang.*']],
             ],
         ],
         [
