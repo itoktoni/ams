@@ -26,6 +26,7 @@
             <x-slot:head>
                 <x-table-checkbox :model="$model" onchange="toggleAll(this)" />
                 <th>Actions</th>
+                <th class="text-left whitespace-nowrap">Aset</th>
                 @foreach ($model::$sortColumns as $column)
                 <x-table-sort field="{{ $column }}" label="{{ formatLabel($column) }}" :sortField="$sortField" :sortDir="$sortDir" />
                 @endforeach
@@ -36,8 +37,18 @@
                 <tr>
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary" />
+                    <td class="min-w-[160px]">{{ $table->hasAset?->aset_nama ? $table->hasAset->aset_nama.' — '.$table->hasAset->aset_kode : ($table->riwayat_service_id_aset ?? '-') }}</td>
                     @foreach ($model::$sortColumns as $column)
-                    <td>{{ $table->$column }}</td>
+                    @if($column === 'riwayat_service_id_aset') @continue @endif
+                    <td>
+                        @if(str_contains($column, 'tanggal') && $table->$column)
+                            {{ formatDate($table->$column) }}
+                        @elseif(str_contains($column, 'biaya') || str_contains($column, 'harga') || str_contains($column, 'total'))
+                            {{ is_numeric($table->$column) ? formatRupiah($table->$column) : ($table->$column ?? '-') }}
+                        @else
+                            {{ $table->$column ?? '-' }}
+                        @endif
+                    </td>
                     @endforeach
                 </tr>
                 @endforeach

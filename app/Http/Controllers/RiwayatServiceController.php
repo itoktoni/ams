@@ -17,6 +17,11 @@ class RiwayatServiceController extends Controller
         $this->model = $model::getModel();
     }
 
+    protected function getData()
+    {
+        return $this->model->query()->with(['hasAset', 'hasTeknisi', 'hasTiket']);
+    }
+
     public function postCreate(GeneralRequest $request)
     {
         $this->handleUploads($request, ['riwayat_service_ttd'], 'service');

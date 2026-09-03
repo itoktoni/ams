@@ -37,7 +37,17 @@
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary" />
                     @foreach ($model::$sortColumns as $column)
-                    <td>{{ $table->$column }}</td>
+                    <td>
+                        @if(str_contains($column, 'harga'))
+                            {{ is_numeric($table->$column) ? formatRupiah($table->$column) : ($table->$column ?? '-') }}
+                        @elseif(str_contains($column, 'bin_aktif') || str_contains($column, 'bin_buffer'))
+                            {{ $table->$column ? 'Kode Rak: '.e($table->$column) : '-' }}
+                        @elseif(str_contains($column, 'stok_minimum') || str_contains($column, 'stok_maksimum') || str_contains($column, 'jumlah'))
+                            {{ $table->$column !== null ? formatAngka((float) $table->$column) : '-' }}
+                        @else
+                            {{ $table->$column ?? '-' }}
+                        @endif
+                    </td>
                     @endforeach
                 </tr>
                 @endforeach
@@ -70,8 +80,12 @@
                                         <p class="text-xs font-medium text-on-surface mt-1 truncate">
                                             @if(str_contains($col, 'tanggal') && $val)
                                                 {{ formatDate($val) }}
-                                            @elseif(str_contains($col, 'harga') || str_contains($col, 'tarif') || str_contains($col, 'total') || str_contains($col, 'biaya') || str_contains($col, 'nominal') || str_contains($col, 'harga'))
+                                            @elseif(str_contains($col, 'harga'))
                                                 {{ is_numeric($val) ? formatRupiah($val) : ($val ?? '-') }}
+                                            @elseif(str_contains($col, 'bin_aktif') || str_contains($col, 'bin_buffer'))
+                                                {{ $val ? 'Kode Rak: '.e($val) : '-' }}
+                                            @elseif(str_contains($col, 'stok_minimum') || str_contains($col, 'stok_maksimum') || str_contains($col, 'jumlah'))
+                                                {{ $val !== null ? formatAngka((float) $val) : '-' }}
                                             @elseif(str_contains($col, 'status') || str_contains($col, 'kondisi') || str_contains($col, 'level') || str_contains($col, 'urgensi'))
                                                 {{ $val ?? '-' }}
                                             @else

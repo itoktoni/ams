@@ -40,6 +40,18 @@
                 </div>
                 <x-input col="12" type="datetime-local" name="peminjaman_jatuh_tempo" label="Rencana Tanggal Kembali" />
                 <x-input col="12" name="peminjaman_tujuan" label="Keperluan" placeholder="Untuk apa meminjam?" />
+                <div class="col-span-12 hidden" id="peminjaman-waiting-info">
+                    <div class="flex items-center gap-2 p-3 rounded-xl text-sm bg-amber-50 border border-amber-200">
+                        <span class="material-symbols-outlined text-amber-600">hourglass_top</span>
+                        <span><b id="waiting-count">0</b> orang menunggu — <a href="#" id="waiting-link" class="text-primary underline">lihat Daftar Tunggu</a></span>
+                    </div>
+                </div>
+                <div class="col-span-12 hidden" id="peminjaman-active-info">
+                    <div class="p-3 rounded-xl text-sm bg-surface-container border border-outline-variant">
+                        <p class="font-semibold">Sedang dipinjam oleh <span id="active-peminjam">-</span></p>
+                        <p class="text-xs text-on-surface-variant">Jatuh tempo <span id="active-jatuh-tempo">-</span> • <span id="active-status">aktif</span></p>
+                    </div>
+                </div>
                 <input type="hidden" name="peminjaman_tanggal_pinjam" value="{{ $model->peminjaman_tanggal_pinjam ?? $nowValue ?? now()->format('Y-m-d\TH:i') }}">
                 <input type="hidden" name="peminjaman_id_peminjam" value="{{ $model->peminjaman_id_peminjam ?? auth()->id() }}">
                 <input type="hidden" name="peminjaman_id_approver" value="{{ $model->peminjaman_id_approver ?? $approverId ?? auth()->id() }}">
@@ -96,6 +108,8 @@
         (function(){
             var lokasiMap = {!! $asetLokasiMapJson !!};
             var availMap = {{ Js::from($availabilityMap ?? []) }};
+            var waitingMap = {{ Js::from($waitingCountMap ?? []) }};
+            var activeMap = {{ Js::from(collect($activePeminjamanMap ?? [])->map(fn($p) => ['peminjam' => $p->hasPeminjam?->name ?? '-', 'jatuh_tempo' => $p->peminjaman_jatuh_tempo ? formatDate($p->peminjaman_jatuh_tempo) : '-', 'status' => $p->peminjaman_status])->toArray()) }};
             var selAset = document.getElementById('select-peminjaman_id_aset');
             if (!selAset) return;
             var info = document.getElementById('aset-lokasi-info');
@@ -104,6 +118,13 @@
             var box = document.getElementById('aset-availability-box');
             var dot = document.getElementById('aset-availability-dot');
             var txt = document.getElementById('aset-availability-text');
+            var wInfo = document.getElementById('peminjaman-waiting-info');
+            var wCount = document.getElementById('waiting-count');
+            var wLink = document.getElementById('waiting-link');
+            var aInfo = document.getElementById('peminjaman-active-info');
+            var aPeminjam = document.getElementById('active-peminjam');
+            var aJatuh = document.getElementById('active-jatuh-tempo');
+            var aStatus = document.getElementById('active-status');
             function apply(){
                 var id = selAset.value;
                 var lokasi = id && lokasiMap[id] ? lokasiMap[id] : null;
@@ -113,7 +134,11 @@
                 }
                 if (info2) {
                     info2.classList.toggle('hidden', !id);
-                    if (!id) return;
+                    if (!id) {
+                        if (wInfo) wInfo.classList.add('hidden');
+                        if (aInfo) aInfo.classList.add('hidden');
+                        return;
+                    }
                     var available = availMap[id] !== false;
                     if (info2 && box) {
                         if (available) {
@@ -125,8 +150,18 @@
                             box.className = 'flex items-center gap-2 p-3 rounded-xl text-sm bg-amber-50 border border-amber-200';
                             dot.className = 'w-2.5 h-2.5 rounded-full shrink-0 bg-amber-500';
                             txt.className = 'font-medium text-amber-700';
-                            txt.textContent = 'Aset sedang dipinjam';
+                            txt.textContent = 'Aset sedang dipinjam — masuk Daftar Tunggu';
                         }
+                    }
+                    var cnt = waitingMap[id] || 0;
+                    if (wInfo) {
+                        if (cnt > 0) { wCount.textContent = cnt; wLink.href = '{{ url("/daftar-tunggu/table") }}?filters[daftar_tunggu_id_aset][$eq]=' + id; wInfo.classList.remove('hidden'); }
+                        else wInfo.classList.add('hidden');
+                    }
+                    var active = activeMap[id];
+                    if (aInfo) {
+                        if (active) { aPeminjam.textContent = active.peminjam; aJatuh.textContent = active.jatuh_tempo; aStatus.textContent = active.status; aInfo.classList.remove('hidden'); }
+                        else aInfo.classList.add('hidden');
                     }
                 }
             }

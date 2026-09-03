@@ -50,11 +50,17 @@ class PeminjamanController extends Controller
             }
         }
 
-        $isPengguna = $user && in_array($user->role, ['pengguna_aset', 'user'], true);
         $allAsetIds = Aset::pluck('aset_id')->all();
         $sedangDipinjamAll = \App\Models\Peminjaman::whereIn('peminjaman_id_aset', $allAsetIds)->where('peminjaman_status', 'aktif')->whereNull('peminjaman_tanggal_kembali')->pluck('peminjaman_id_aset')->all();
         $availabilityMapAll = [];
         foreach ($allAsetIds as $aid) $availabilityMapAll[$aid] = !in_array($aid, $sedangDipinjamAll, true);
+        $waitingCountMap = [];
+        foreach (\App\Models\DaftarTunggu::where('daftar_tunggu_status', 'menunggu')->selectRaw('daftar_tunggu_id_aset, COUNT(*) as cnt')->groupBy('daftar_tunggu_id_aset')->get() as $row) {
+            $waitingCountMap[$row->daftar_tunggu_id_aset] = (int) $row->cnt;
+        }
+        $activePeminjamanMap = \App\Models\Peminjaman::where('peminjaman_status', 'aktif')->whereNull('peminjaman_tanggal_kembali')->get()->keyBy('peminjaman_id_aset');
+
+        $isPengguna = $user && in_array($user->role, ['pengguna_aset', 'user'], true);
         if ($isPengguna) {
             $asetIds = Aset::where('aset_id_penanggung_jawab', $user->id)->pluck('aset_id')->all();
             $asetOptions = Aset::where('aset_id_penanggung_jawab', $user->id)->orderBy('aset_nama')->pluck('aset_nama', 'aset_id')->toArray();
@@ -67,12 +73,16 @@ class PeminjamanController extends Controller
                 'nowValue' => now()->format('Y-m-d\TH:i'),
                 'availabilityMap' => $availMap,
                 'asetLokasiMap' => $asetLokasiMap,
+                'waitingCountMap' => $waitingCountMap,
+                'activePeminjamanMap' => $activePeminjamanMap,
                 'budgetInfo' => $budgetInfo,
             ]);
         } else {
             $approver = $this->autoApprover();
             $default = array_merge($default, [
                 'asetLokasiMap' => $asetLokasiMap,
+                'waitingCountMap' => $waitingCountMap,
+                'activePeminjamanMap' => $activePeminjamanMap,
                 'budgetInfo' => $budgetInfo,
                 'approverId' => $approver?->id,
                 'nowValue' => now()->format('Y-m-d\TH:i'),
@@ -147,7 +157,12 @@ class PeminjamanController extends Controller
         if (! in_array(auth()->user()->role ?? '', ['developer','admin','supervisor'], true)) abort(403, 'Hanya admin/supervisor yang bisa.');
         $r = $this->model->findOrFail($id);
         $r->update(['peminjaman_status' => 'selesai', 'peminjaman_tanggal_kembali' => now()]);
-        return $this->response(['status'=>true,'message'=>'Aset dikembalikan.','data'=>$r->fresh()]);
+        $next = \App\Models\DaftarTunggu::where('daftar_tunggu_id_aset', $r->peminjaman_id_aset)->where('daftar_tunggu_status', 'menunggu')->orderBy('daftar_tunggu_tanggal_mulai')->first();
+        $msg = 'Aset dikembalikan.';
+        if ($next) {
+            $msg .= ' Ada '.$next->hasPeminjam?->name.' menunggu — cek Daftar Tunggu.';
+        }
+        return $this->response(['status'=>true,'message'=>$msg,'data'=>$r->fresh()]);
     }
 
     protected function handleUploads(GeneralRequest $request, array $fields, string $folder, ?array $existing = null): void

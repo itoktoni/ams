@@ -13,4 +13,9 @@ class JadwalServiceController extends Controller
     {
         $this->model = $model::getModel();
     }
+
+    protected function getData()
+    {
+        return $this->model->query()->with(['hasAset', 'hasTemplate']);
+    }
 }

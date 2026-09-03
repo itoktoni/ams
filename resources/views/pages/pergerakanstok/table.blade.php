@@ -37,7 +37,19 @@
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary" />
                     @foreach ($model::$sortColumns as $column)
-                    <td>{{ $table->$column }}</td>
+                    <td>
+                        @if($column === 'pergerakan_stok_id_suku_cadang')
+                            {{ $table->hasSukuCadang?->suku_cadang_nama ?? ($table->$column ?? '-') }}@if($table->hasSukuCadang?->suku_cadang_kode) <span class="text-xs text-on-surface-variant">({{ $table->hasSukuCadang->suku_cadang_kode }})</span>@endif
+                        @elseif($column === 'pergerakan_stok_id_gudang')
+                            {{ $table->hasGudang?->gudang_nama ?? ($table->$column ?? '-') }}@if($table->hasGudang?->gudang_kode) <span class="text-xs text-on-surface-variant">({{ $table->hasGudang->gudang_kode }})</span>@endif
+                        @elseif(str_contains($column, 'jumlah'))
+                            {{ $table->$column !== null ? formatAngka((float) $table->$column) : '-' }}
+                        @elseif(str_contains($column, 'tanggal') && $table->$column)
+                            {{ formatDate($table->$column) }}
+                        @else
+                            {{ $table->$column ?? '-' }}
+                        @endif
+                    </td>
                     @endforeach
                 </tr>
                 @endforeach
@@ -68,9 +80,15 @@
                                     <div class="bg-surface-container-low/70 rounded-xl px-2.5 py-2">
                                         <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase truncate">{{ formatLabel($col) }}</p>
                                         <p class="text-xs font-medium text-on-surface mt-1 truncate">
-                                            @if(str_contains($col, 'tanggal') && $val)
+                                            @if($col === 'pergerakan_stok_id_suku_cadang')
+                                                {{ $table->hasSukuCadang?->suku_cadang_nama ?? ($val ?? '-') }}
+                                            @elseif($col === 'pergerakan_stok_id_gudang')
+                                                {{ $table->hasGudang?->gudang_nama ?? ($val ?? '-') }}
+                                            @elseif(str_contains($col, 'jumlah'))
+                                                {{ $val !== null ? formatAngka((float) $val) : '-' }}
+                                            @elseif(str_contains($col, 'tanggal') && $val)
                                                 {{ formatDate($val) }}
-                                            @elseif(str_contains($col, 'harga') || str_contains($col, 'tarif') || str_contains($col, 'total') || str_contains($col, 'biaya') || str_contains($col, 'nominal') || str_contains($col, 'harga'))
+                                            @elseif(str_contains($col, 'harga') || str_contains($col, 'tarif') || str_contains($col, 'total') || str_contains($col, 'biaya') || str_contains($col, 'nominal'))
                                                 {{ is_numeric($val) ? formatRupiah($val) : ($val ?? '-') }}
                                             @elseif(str_contains($col, 'status') || str_contains($col, 'kondisi') || str_contains($col, 'level') || str_contains($col, 'urgensi'))
                                                 {{ $val ?? '-' }}

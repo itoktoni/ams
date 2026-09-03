@@ -15,8 +15,8 @@
                 <x-input col="6" name="suku_cadang_satuan" />
                 <x-input col="6" type="number" step="0.01" name="suku_cadang_stok_minimum" />
                 <x-input col="6" type="number" step="0.01" name="suku_cadang_stok_maksimum" />
-                <x-input col="6" type="number" step="0.01" name="suku_cadang_bin_aktif" />
-                <x-input col="6" type="number" step="0.01" name="suku_cadang_bin_buffer" />
+                <x-input col="6" name="suku_cadang_bin_aktif" label="Kode Rak Aktif" placeholder="Mis. A-01" />
+                <x-input col="6" name="suku_cadang_bin_buffer" label="Kode Rak Buffer" placeholder="Mis. B-02" />
                 <x-textarea col="12" name="suku_cadang_spesifikasi" />
 
                 {{-- Link ke Aset (compatible / BOM) --}}

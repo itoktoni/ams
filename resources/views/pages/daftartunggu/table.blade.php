@@ -35,7 +35,13 @@
                 @foreach($data as $table)
                 <tr>
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
-                    <x-table-action :model="$model" :id="$table->field_primary" />
+                    <x-table-action :model="$model" :id="$table->field_primary">
+                        @if($table->daftar_tunggu_status === 'menunggu')
+                        <a href="{{ route('daftar-tunggu.getConvert', ['id' => $table->field_primary]) }}" onclick="return confirm('Convert jadi peminjaman?')" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-success/10 text-success hover:bg-success/20" title="Convert ke Peminjaman">
+                            <span class="material-symbols-outlined text-lg">swap_horiz</span>
+                        </a>
+                        @endif
+                    </x-table-action>
                     @foreach ($model::$sortColumns as $column)
                         @if($column === 'daftar_tunggu_id_aset')
                             <td>

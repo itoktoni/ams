@@ -53,7 +53,15 @@
                         </div>
                     </td>
                     @foreach ($model::$sortColumns as $column)
-                    <td>{{ $table->$column }}</td>
+                    <td>
+                        @if(str_contains($column, 'tanggal') && $table->$column)
+                            {{ formatDate($table->$column) }}
+                        @elseif(str_contains($column, 'harga') || str_contains($column, 'nilai') || str_contains($column, 'biaya') || str_contains($column, 'total') || str_contains($column, 'nominal') || str_contains($column, 'gain'))
+                            {{ is_numeric($table->$column) ? formatRupiah($table->$column) : ($table->$column ?? '-') }}
+                        @else
+                            {{ $table->$column ?? '-' }}
+                        @endif
+                    </td>
                     @endforeach
                 </tr>
                 @endforeach

@@ -26,6 +26,8 @@
             <x-slot:head>
                 <x-table-checkbox :model="$model" onchange="toggleAll(this)" />
                 <th>Actions</th>
+                <th class="text-left whitespace-nowrap">Aset</th>
+                <th class="text-left whitespace-nowrap">Template</th>
                 @foreach ($model::$sortColumns as $column)
                 <x-table-sort field="{{ $column }}" label="{{ formatLabel($column) }}" :sortField="$sortField" :sortDir="$sortDir" />
                 @endforeach
@@ -36,8 +38,17 @@
                 <tr>
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary" />
+                    <td class="min-w-[160px]">{{ $table->hasAset?->aset_nama ? $table->hasAset->aset_nama.' — '.$table->hasAset->aset_kode : ($table->jadwal_service_id_aset ?? '-') }}</td>
+                    <td class="text-xs">{{ $table->hasTemplate?->template_service_nama ?? ($table->jadwal_service_id_template ?? '-') }}</td>
                     @foreach ($model::$sortColumns as $column)
-                    <td>{{ $table->$column }}</td>
+                    @if(in_array($column, ['jadwal_service_id_aset','jadwal_service_id_template'])) @continue @endif
+                    <td>
+                        @if(str_contains($column, 'tanggal') && $table->$column)
+                            {{ formatDate($table->$column) }}
+                        @else
+                            {{ $table->$column ?? '-' }}
+                        @endif
+                    </td>
                     @endforeach
                 </tr>
                 @endforeach
