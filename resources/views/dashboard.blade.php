@@ -32,9 +32,9 @@
     </p>
     @if(!empty($budgetInfo))
     <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
-      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border {{ $budgetInfo['sisa']<0?'bg-error/10 border-error text-error':'bg-primary/5 border-primary/20 text-primary' }}">
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border {{ $budgetInfo['tersedia']<0?'bg-error/10 border-error text-error':'bg-primary/5 border-primary/20 text-primary' }}">
         <span class="material-symbols-outlined text-[16px]">account_balance_wallet</span>
-        Budget {{ $budgetInfo['department']->department_nama }}: {{ formatRupiah($budgetInfo['sisa']) }} sisa / {{ formatRupiah($budgetInfo['department']->department_budget) }}
+        Budget {{ $budgetInfo['department']->department_nama }}: {{ formatRupiah($budgetInfo['tersedia']) }} tersedia / {{ formatRupiah($budgetInfo['department']->department_budget) }}
       </span>
       <a href="{{ route('permintaan-suku-cadang.getTable') }}" class="text-primary underline">Permintaan ({{ $amsStats['permintaan_menunggu'] }} menunggu)</a>
     </div>
@@ -102,11 +102,12 @@
     <p class="text-xs text-on-surface-variant">{{ $amsStats['tiket_buka'] }} buka • {{ $amsStats['tiket_progres'] }} progres</p>
     <a href="{{ route('tiket.getTable') }}" class="text-xs text-primary underline mt-2 inline-block">Buat / lihat tiket →</a>
   </div>
-  <div class="kpi-card bg-white border border-primary/20 rounded-2xl p-4 sm:p-5 min-w-0 {{ isset($budgetInfo) && $budgetInfo['sisa']<0 ? 'border-error' : '' }}">
-    <p class="text-[10px] font-bold tracking-widest uppercase {{ isset($budgetInfo) && $budgetInfo['sisa']<0 ? 'text-error' : 'text-primary' }}">BUDGET SUKU CADANG</p>
+  <div class="kpi-card bg-white border border-primary/20 rounded-2xl p-4 sm:p-5 min-w-0 {{ isset($budgetInfo) && $budgetInfo['tersedia']<0 ? 'border-error' : '' }}">
+    <p class="text-[10px] font-bold tracking-widest uppercase {{ isset($budgetInfo) && $budgetInfo['tersedia']<0 ? 'text-error' : 'text-primary' }}">BUDGET SUKU CADANG</p>
     @if(!empty($budgetInfo))
       <p class="text-sm font-bold mt-1">{{ formatRupiah($budgetInfo['terpakai']) }} / {{ formatRupiah($budgetInfo['department']->department_budget) }}</p>
-      <p class="text-xs {{ $budgetInfo['sisa']<0?'text-error font-bold':'text-success' }}">Sisa {{ formatRupiah($budgetInfo['sisa']) }}</p>
+      <p class="text-xs {{ $budgetInfo['tersedia']<0?'text-error font-bold':'text-success' }}">Tersedia {{ formatRupiah($budgetInfo['tersedia']) }}</p>
+      <p class="text-[11px] text-on-surface-variant mt-0.5">Menunggu {{ formatRupiah($budgetInfo['pending']) }}</p>
       <a href="{{ route('permintaan-suku-cadang.getTable') }}" class="text-xs text-primary underline mt-1 inline-block">{{ $amsStats['permintaan_menunggu'] }} menunggu →</a>
     @else
       <p class="text-xs text-on-surface-variant mt-2">Belum ada department</p>

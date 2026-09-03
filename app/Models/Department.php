@@ -72,13 +72,71 @@ class Department extends BaseModel
         return $this->hasMany(PermintaanSukuCadang::class, 'department_id', 'department_id');
     }
 
+    /**
+     * Sisa budget berdasarkan pemakaian nyata (sudah disetujui).
+     */
     public function getSisaAttribute(): float
     {
         return (float) $this->department_budget - (float) $this->department_budget_terpakai;
     }
 
+    /**
+     * Nilai permintaan yang masih menunggu — belum mengurangi budget, tapi sudah direserve.
+     */
+    public function getPendingAttribute(): float
+    {
+        return PermintaanSukuCadang::pendingDepartment($this->department_id);
+    }
+
+    /**
+     * Sisa yang benar-benar masih bisa dipakai = budget - terpakai - menunggu.
+     */
+    public function getTersediaAttribute(): float
+    {
+        return (float) $this->department_budget - (float) $this->department_budget_terpakai - $this->pending;
+    }
+
     public function getSisaFormattedAttribute(): string
     {
         return formatRupiah($this->sisa);
+    }
+
+    /**
+     * Hitung ulang & simpan department_budget_terpakai dari permintaan yang sudah disetujui.
+     */
+    public static function syncTerpakai(mixed $departmentId): ?float
+    {
+        if (! $departmentId) {
+            return null;
+        }
+
+        $department = static::find($departmentId);
+
+        if (! $department) {
+            return null;
+        }
+
+        $terpakai = PermintaanSukuCadang::terpakaiDepartment($departmentId);
+
+        static::where('department_id', $departmentId)->update([
+            'department_budget_terpakai' => $terpakai,
+        ]);
+
+        return $terpakai;
+    }
+
+    /**
+     * Sinkronisasi semua department — dipakai command `permintaan:sync-budget`.
+     */
+    public static function syncAllTerpakai(): int
+    {
+        $count = 0;
+
+        static::query()->pluck('department_id')->each(function ($departmentId) use (&$count) {
+            static::syncTerpakai($departmentId);
+            $count++;
+        });
+
+        return $count;
     }
 }

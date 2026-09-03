@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\CreateAction;
+use App\Actions\DeleteAction;
 use App\Concerns\ControllerTrait;
 use App\Enums\SukuCadang\StatusPermintaanEnum;
 use App\Http\Requests\GeneralRequest;
@@ -28,14 +29,7 @@ class PermintaanSukuCadangController extends Controller
         if ($user && $user->department_id) {
             $dept = Department::find($user->department_id);
             if ($dept) {
-                $terpakai = (float) PermintaanSukuCadang::where('department_id', $dept->department_id)
-                    ->whereNotIn('permintaan_suku_cadang_status', ['ditolak'])
-                    ->sum('permintaan_suku_cadang_subtotal');
-                $budgetInfo = [
-                    'department' => $dept,
-                    'terpakai' => $terpakai,
-                    'sisa' => (float) $dept->department_budget - $terpakai,
-                ];
+                $budgetInfo = self::budgetInfo($dept);
             }
         }
 
@@ -46,6 +40,24 @@ class PermintaanSukuCadangController extends Controller
         ];
 
         return array_merge($default, $data);
+    }
+
+    /**
+     * Ringkasan budget department: terpakai (sudah disetujui), menunggu (reserve), sisa & tersedia.
+     */
+    protected static function budgetInfo(Department $dept, mixed $exceptId = null): array
+    {
+        $terpakai = PermintaanSukuCadang::terpakaiDepartment($dept->department_id, $exceptId);
+        $pending = PermintaanSukuCadang::pendingDepartment($dept->department_id, $exceptId);
+        $budget = (float) $dept->department_budget;
+
+        return [
+            'department' => $dept,
+            'terpakai' => $terpakai,
+            'pending' => $pending,
+            'sisa' => $budget - $terpakai,
+            'tersedia' => $budget - $terpakai - $pending,
+        ];
     }
 
     protected function getData()
@@ -86,15 +98,13 @@ class PermintaanSukuCadangController extends Controller
         }
         $subtotal = $harga * $jumlah;
 
-        $terpakai = (float) PermintaanSukuCadang::where('department_id', $deptId)
-            ->whereNotIn('permintaan_suku_cadang_status', ['ditolak'])
-            ->sum('permintaan_suku_cadang_subtotal');
-        $sisa = (float) $department->department_budget - $terpakai;
+        $info = self::budgetInfo($department);
 
-        if ($subtotal > $sisa) {
+        if ($subtotal > $info['tersedia']) {
             return $this->response([
                 'status' => false,
-                'message' => 'Budget department '.$department->department_nama.' tidak cukup. Sisa '.formatRupiah($sisa).', butuh '.formatRupiah($subtotal).'.',
+                'message' => 'Budget department '.$department->department_nama.' tidak cukup. Tersedia '.formatRupiah($info['tersedia'])
+                    .' (terpakai '.formatRupiah($info['terpakai']).', menunggu '.formatRupiah($info['pending']).'), butuh '.formatRupiah($subtotal).'.',
                 'data' => null,
             ]);
         }
@@ -133,15 +143,12 @@ class PermintaanSukuCadangController extends Controller
         if ($deptId) {
             $department = Department::find($deptId);
             if ($department) {
-                $terpakai = (float) PermintaanSukuCadang::where('department_id', $deptId)
-                    ->where('permintaan_suku_cadang_id', '!=', $record->permintaan_suku_cadang_id)
-                    ->whereNotIn('permintaan_suku_cadang_status', ['ditolak'])
-                    ->sum('permintaan_suku_cadang_subtotal');
-                $sisa = (float) $department->department_budget - $terpakai;
-                if ($subtotal > $sisa) {
+                $info = self::budgetInfo($department, $record->permintaan_suku_cadang_id);
+                if ($subtotal > $info['tersedia']) {
                     return $this->response([
                         'status' => false,
-                        'message' => 'Budget department '.$department->department_nama.' tidak cukup. Sisa '.formatRupiah($sisa).', butuh '.formatRupiah($subtotal).'.',
+                        'message' => 'Budget department '.$department->department_nama.' tidak cukup. Tersedia '.formatRupiah($info['tersedia'])
+                            .' (terpakai '.formatRupiah($info['terpakai']).', menunggu '.formatRupiah($info['pending']).'), butuh '.formatRupiah($subtotal).'.',
                         'data' => null,
                     ]);
                 }
@@ -169,6 +176,43 @@ class PermintaanSukuCadangController extends Controller
         if (! in_array(auth()->user()->role ?? '', ['developer','admin','supervisor'], true)) abort(403);
         $record = $this->model->findOrFail($id);
         $record->update(['permintaan_suku_cadang_status' => 'ditolak']);
+        // 'ditolak' bukan status pemakaian → budget department dikembalikan.
+        Department::syncTerpakai($record->department_id);
         return $this->response(['status' => true, 'message' => 'Permintaan ditolak.', 'data' => $record->fresh()]);
+    }
+
+    /**
+     * Delete via query builder tidak memicu event model,
+     * jadi budget department disinkronkan manual di sini.
+     */
+    public function getDelete(GeneralRequest $request, $id)
+    {
+        $record = $this->model->findOrFail($id);
+        $departmentId = $record->department_id;
+
+        $response = (new DeleteAction)->remove($id, $this->model);
+
+        Department::syncTerpakai($departmentId);
+
+        return $this->response($response);
+    }
+
+    public function postDelete(GeneralRequest $request)
+    {
+        $ids = (array) $request->input('ids', []);
+
+        $departmentIds = $this->model->whereIn($this->model->field_primary(), $ids)
+            ->pluck('department_id')
+            ->filter()
+            ->unique()
+            ->all();
+
+        $count = DeleteAction::run($request, $this->model);
+
+        foreach ($departmentIds as $departmentId) {
+            Department::syncTerpakai($departmentId);
+        }
+
+        return $this->response($count);
     }
 }

@@ -27,6 +27,8 @@
                 <x-table-sort field="{{ $column }}" label="{{ formatLabel($column) }}" :sortField="$sortField" :sortDir="$sortDir" />
                 @endforeach
                 <th>Sisa Budget</th>
+                <th>Menunggu</th>
+                <th>Tersedia</th>
             </x-slot:head>
 
             <x-slot:body>
@@ -44,6 +46,8 @@
                     </td>
                     @endforeach
                     <td>{{ formatRupiah($table->sisa) }}</td>
+                    <td>{{ formatRupiah($table->pending) }}</td>
+                    <td>{{ formatRupiah($table->tersedia) }}</td>
                 </tr>
                 @endforeach
             </x-slot:body>

@@ -96,7 +96,7 @@ class DashboardController extends Controller
                 if (! $deptId) return 0;
                 $dept = Department::find($deptId);
                 if (! $dept) return 0;
-                $terpakai = (float) PermintaanSukuCadang::where('department_id', $deptId)->whereNotIn('permintaan_suku_cadang_status', ['ditolak'])->sum('permintaan_suku_cadang_subtotal');
+                $terpakai = PermintaanSukuCadang::terpakaiDepartment($deptId);
                 return (int) ((float) $dept->department_budget - $terpakai);
             }, 0),
         ];
@@ -187,8 +187,15 @@ class DashboardController extends Controller
             $budgetInfo = $this->safeQuery(function () use ($deptId) {
                 $dept = Department::find($deptId);
                 if (! $dept) return null;
-                $terpakai = (float) PermintaanSukuCadang::where('department_id', $deptId)->whereNotIn('permintaan_suku_cadang_status', ['ditolak'])->sum('permintaan_suku_cadang_subtotal');
-                return ['department' => $dept, 'terpakai' => $terpakai, 'sisa' => (float) $dept->department_budget - $terpakai];
+                $terpakai = PermintaanSukuCadang::terpakaiDepartment($deptId);
+                $pending = PermintaanSukuCadang::pendingDepartment($deptId);
+                return [
+                    'department' => $dept,
+                    'terpakai' => $terpakai,
+                    'pending' => $pending,
+                    'sisa' => (float) $dept->department_budget - $terpakai,
+                    'tersedia' => (float) $dept->department_budget - $terpakai - $pending,
+                ];
             }, null);
         }
 

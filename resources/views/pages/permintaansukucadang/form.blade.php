@@ -4,22 +4,35 @@
     <x-breadcrumb :items="[['url' => moduleRoute('getTable'), 'label' => moduleLabel()], ['url' => '', 'label' => isset($model) && $model->exists ? 'Update' : 'Create']]" />
 
     @if(!empty($budgetInfo))
-    <div class="mb-4 grid grid-cols-3 gap-3">
+    @php
+        $deptBudget = (float) $budgetInfo['department']->department_budget;
+        $terpakai = (float) $budgetInfo['terpakai'];
+        $menunggu = (float) $budgetInfo['pending'];
+        $tersedia = (float) $budgetInfo['tersedia'];
+        $overBudget = $tersedia < 0;
+    @endphp
+    <div class="mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="bg-white rounded-xl border border-outline-variant/20 p-3">
             <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase">Department</p>
             <p class="text-sm font-bold text-on-surface mt-1">{{ $budgetInfo['department']->department_nama }} ({{ $budgetInfo['department']->department_kode }})</p>
+            <p class="text-[11px] text-on-surface-variant">Periode {{ ucfirst($budgetInfo['department']->department_periode) }}</p>
         </div>
         <div class="bg-white rounded-xl border border-outline-variant/20 p-3">
             <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase">Budget</p>
-            <p class="text-sm font-bold text-on-surface mt-1">{{ formatRupiah($budgetInfo['department']->department_budget) }}</p>
-            <p class="text-[11px] text-on-surface-variant">Periode {{ ucfirst($budgetInfo['department']->department_periode) }}</p>
+            <p class="text-sm font-bold text-on-surface mt-1">{{ formatRupiah($deptBudget) }}</p>
+            <p class="text-[11px] text-on-surface-variant">Sisa {{ formatRupiah($budgetInfo['sisa']) }}</p>
         </div>
-        <div class="rounded-xl border p-3 {{ $budgetInfo['sisa'] < 0 ? 'bg-error-container border-error' : 'bg-primary/5 border-primary/20' }}">
-            <p class="text-[10px] font-bold tracking-widest uppercase {{ $budgetInfo['sisa'] < 0 ? 'text-error' : 'text-primary' }}">Terpakai / Sisa</p>
-            <p class="text-sm font-bold mt-1 {{ $budgetInfo['sisa'] < 0 ? 'text-error' : 'text-on-surface' }}">{{ formatRupiah($budgetInfo['terpakai']) }} / {{ formatRupiah($budgetInfo['sisa']) }}</p>
+        <div class="bg-white rounded-xl border border-outline-variant/20 p-3">
+            <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase">Terpakai (disetujui)</p>
+            <p class="text-sm font-bold text-on-surface mt-1">{{ formatRupiah($terpakai) }}</p>
+            <p class="text-[11px] text-on-surface-variant">Menunggu {{ formatRupiah($menunggu) }}</p>
+        </div>
+        <div class="rounded-xl border p-3 {{ $overBudget ? 'bg-error-container border-error' : 'bg-primary/5 border-primary/20' }}">
+            <p class="text-[10px] font-bold tracking-widest uppercase {{ $overBudget ? 'text-error' : 'text-primary' }}">Tersedia</p>
+            <p class="text-sm font-bold mt-1 {{ $overBudget ? 'text-error' : 'text-on-surface' }}">{{ formatRupiah($tersedia) }}</p>
             <div class="mt-2 h-2 bg-outline-variant/20 rounded-full overflow-hidden">
-                @php $pct = $budgetInfo['department']->department_budget > 0 ? min(100, ($budgetInfo['terpakai'] / $budgetInfo['department']->department_budget) * 100) : 0; @endphp
-                <div class="h-full {{ $budgetInfo['sisa'] < 0 ? 'bg-error' : 'bg-primary' }}" style="width: {{ $pct }}%"></div>
+                @php $pct = $deptBudget > 0 ? min(100, (($terpakai + $menunggu) / $deptBudget) * 100) : 0; @endphp
+                <div class="h-full {{ $overBudget ? 'bg-error' : 'bg-primary' }}" style="width: {{ $pct }}%"></div>
             </div>
         </div>
     </div>
