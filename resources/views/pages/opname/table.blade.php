@@ -36,13 +36,18 @@
                 <tr>
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary">
+                        <a href="{{ route('opname.getScan', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20" title="Scan">
+                            <span class="material-symbols-outlined text-lg">qr_code_scanner</span>
+                        </a>
                         <a href="{{ route('opname.getReport', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-warning/10 text-warning hover:bg-warning/20" title="Report">
                             <span class="material-symbols-outlined text-lg">assessment</span>
                         </a>
                     </x-table-action>
                     @foreach ($model::$sortColumns as $column)
                     <td>
-                        @if(str_contains($column, 'tanggal') && $table->$column)
+                        @if($column === 'opname_id_lokasi')
+                            {{ $table->hasLokasi?->aset_lokasi_nama ?? ($table->$column ?? '-') }}
+                        @elseif(str_contains($column, 'tanggal') && $table->$column)
                             {{ formatDate($table->$column) }}
                         @else
                             {{ $table->$column ?? '-' }}
@@ -78,7 +83,9 @@
                                     <div class="bg-surface-container-low/70 rounded-xl px-2.5 py-2">
                                         <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase truncate">{{ formatLabel($col) }}</p>
                                         <p class="text-xs font-medium text-on-surface mt-1 truncate">
-                                            @if(str_contains($col, 'tanggal') && $val)
+                                            @if($col === 'opname_id_lokasi')
+                                                {{ $table->hasLokasi?->aset_lokasi_nama ?? ($val ?? '-') }}
+                                            @elseif(str_contains($col, 'tanggal') && $val)
                                                 {{ formatDate($val) }}
                                             @elseif(str_contains($col, 'harga') || str_contains($col, 'tarif') || str_contains($col, 'total') || str_contains($col, 'biaya') || str_contains($col, 'nominal') || str_contains($col, 'harga'))
                                                 {{ is_numeric($val) ? formatRupiah($val) : ($val ?? '-') }}

@@ -34,13 +34,11 @@ class Opname extends BaseModel
         'opname_nomor' => 'Nomor',
         'opname_id_lokasi' => 'Lokasi',
         'opname_status' => 'Status',
-        'opname_tanggal' => 'Tanggal',
     ];
 
     public static $sortColumns = [
         'opname_nomor',
         'opname_id_lokasi',
-        'opname_tanggal',
         'opname_tanggal_mulai',
         'opname_tanggal_selesai',
         'opname_status',

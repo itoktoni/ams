@@ -3,86 +3,46 @@
 <x-layouts::app>
     <x-breadcrumb :items="[['url' => moduleRoute('getTable'), 'label' => moduleLabel()], ['url' => '', 'label' => isset($model) && $model->exists ? 'Update' : 'Create']]" />
 
+    @if(!empty($budgetInfo))
+    <div class="mb-4 grid grid-cols-3 gap-3">
+        <div class="bg-white rounded-xl border border-outline-variant/20 p-3">
+            <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase">Department</p>
+            <p class="text-sm font-bold mt-1">{{ $budgetInfo['department']->department_nama }} ({{ $budgetInfo['department']->department_kode }})</p>
+        </div>
+        <div class="bg-white rounded-xl border border-outline-variant/20 p-3">
+            <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase">Budget</p>
+            <p class="text-sm font-bold mt-1">{{ formatRupiah($budgetInfo['department']->department_budget) }}</p>
+        </div>
+        <div class="rounded-xl border p-3 {{ $budgetInfo['sisa'] < 0 ? 'bg-error-container border-error' : 'bg-primary/5 border-primary/20' }}">
+            <p class="text-[10px] font-bold tracking-widest uppercase {{ $budgetInfo['sisa'] < 0 ? 'text-error' : 'text-primary' }}">Sisa</p>
+            <p class="text-sm font-bold mt-1 {{ $budgetInfo['sisa'] < 0 ? 'text-error' : 'text-on-surface' }}">{{ formatRupiah($budgetInfo['sisa']) }}</p>
+        </div>
+    </div>
+    @endif
+
     <x-form :model="$model">
         <x-card :label="moduleLabel()">
             @bind($model ?? null)
 
-                @php $isUserMode = $isUserMode ?? false; @endphp
-
-                @if($isUserMode)
-                    {{-- ===== FORM SEDERHANA UNTUK USER ===== --}}
-                    <x-select col="12" name="peminjaman_id_aset" :options="$asetOptions ?? []" helper="Hanya aset yang di-assign kepada Anda" />
-
-                    {{-- info availability aset terpilih --}}
-                    <div class="col-span-12 hidden" id="aset-availability-info">
-                        <div class="flex items-center gap-2 p-3 rounded-xl text-sm" id="aset-availability-box">
-                            <span id="aset-availability-dot" class="w-2.5 h-2.5 rounded-full shrink-0"></span>
-                            <span id="aset-availability-text" class="font-medium"></span>
-                        </div>
+                {{-- Simple untuk semua role — seperti pengguna_aset --}}
+                <x-select col="12" name="peminjaman_id_aset" :options="$asetOptions ?? App\Models\Aset::getOptions()" label="Aset" helper="Pilih aset yang ingin dipinjam" class="search" />
+                <div class="col-span-12 hidden" id="aset-lokasi-info">
+                    <div class="flex items-center gap-2 p-3 rounded-xl text-sm bg-primary/5 border border-primary/10">
+                        <span class="material-symbols-outlined text-primary">location_on</span>
+                        <span>Asal: <b id="aset-lokasi-nama" class="text-on-surface"></b></span>
                     </div>
-
-                    {{-- approver otomatis --}}
-                    <input type="hidden" name="peminjaman_id_approver" value="{{ $approverId }}">
-                    <input type="hidden" name="peminjaman_id_peminjam" value="{{ auth()->id() }}">
-                    <div class="col-span-12 p-3 bg-surface-container-low rounded-xl text-sm text-on-surface-variant">
-                        Approval: <span class="font-semibold text-on-surface">{{ $approverName }}</span> (otomatis)
+                </div>
+                <div class="col-span-12 hidden" id="aset-availability-info">
+                    <div class="flex items-center gap-2 p-3 rounded-xl text-sm" id="aset-availability-box">
+                        <span id="aset-availability-dot" class="w-2.5 h-2.5 rounded-full shrink-0"></span>
+                        <span id="aset-availability-text" class="font-medium"></span>
                     </div>
-
-                    {{-- tanggal pinjam otomatis now --}}
-                    <input type="hidden" name="peminjaman_tanggal_pinjam" value="{{ $nowValue }}">
-                    <div class="col-span-12 p-3 bg-surface-container-low rounded-xl text-sm text-on-surface-variant">
-                        Tanggal pinjam: <span class="font-semibold text-on-surface">sekarang</span> (otomatis)
-                    </div>
-
-                    {{-- user hanya isi rencana tanggal kembali --}}
-                    <x-input col="12" type="datetime-local" name="peminjaman_jatuh_tempo" label="Rencana Tanggal Kembali" />
-
-                    {{-- tujuan sederhana (opsional) --}}
-                    <x-input col="12" name="peminjaman_tujuan" label="Keperluan (opsional)" />
-
-                    {{-- field otomatis / disembunyikan --}}
-                    <input type="hidden" name="peminjaman_nomor" value="">
-                    <input type="hidden" name="peminjaman_status" value="diajukan">
-                    <input type="hidden" name="peminjaman_grace_jam" value="">
-                    <input type="hidden" name="peminjaman_denda" value="">
-                    <input type="hidden" name="peminjaman_perpanjang_ke" value="">
-                    <input type="hidden" name="peminjaman_catatan" value="">
-                    <input type="hidden" name="peminjaman_tanggal_kembali" value="">
-                    <input type="hidden" name="peminjaman_kondisi_kembali" value="">
-                    <input type="hidden" name="is_daftar_tunggu" id="is-daftar-tunggu" value="0">
-
-                @else
-                    {{-- ===== FORM LENGKAP UNTUK ADMIN ===== --}}
-                    <x-input col="6" name="peminjaman_nomor" />
-                    <x-select col="6" name="peminjaman_status" :options="App\Enums\Peminjaman\StatusPeminjamanEnum::getOptions()" />
-
-                    <x-select col="6" name="peminjaman_id_aset" :options="App\Models\Aset::getOptions()" />
-                    <x-select col="6" name="peminjaman_id_peminjam" :options="App\Models\User::getOptions()" />
-                    <x-select col="6" name="peminjaman_id_approver" :options="App\Models\User::getOptions()" />
-
-                    <x-input col="6" type="datetime-local" name="peminjaman_tanggal_pinjam" />
-                    <x-input col="6" type="datetime-local" name="peminjaman_jatuh_tempo" />
-                    <x-input col="6" type="datetime-local" name="peminjaman_tanggal_kembali" />
-
-                    <x-input col="4" type="number" name="peminjaman_grace_jam" />
-                    <x-input col="4" type="number" step="0.01" name="peminjaman_denda" />
-                    <x-input col="4" name="peminjaman_kondisi_kembali" />
-
-                    <x-input col="6" type="number" name="peminjaman_perpanjang_ke" />
-
-                    <x-textarea col="12" name="peminjaman_tujuan" />
-                    <x-textarea col="12" name="peminjaman_catatan" />
-
-                    <x-file
-                        name="peminjaman_foto_kembali"
-                        label="Foto Kembali"
-                        col="12"
-                        accept="image/*"
-                        capture="environment"
-                        :preview="true"
-                        :value="$model?->peminjaman_foto_kembali_url"
-                        helper="Ambil foto via kamera di HP atau pilih dari galeri" />
-                @endif
+                </div>
+                <x-input col="12" type="datetime-local" name="peminjaman_jatuh_tempo" label="Rencana Tanggal Kembali" />
+                <x-input col="12" name="peminjaman_tujuan" label="Keperluan" placeholder="Untuk apa meminjam?" />
+                <input type="hidden" name="peminjaman_tanggal_pinjam" value="{{ $model->peminjaman_tanggal_pinjam ?? $nowValue ?? now()->format('Y-m-d\TH:i') }}">
+                <input type="hidden" name="peminjaman_id_peminjam" value="{{ $model->peminjaman_id_peminjam ?? auth()->id() }}">
+                <input type="hidden" name="peminjaman_id_approver" value="{{ $model->peminjaman_id_approver ?? $approverId ?? auth()->id() }}">
 
             @endbind
         </x-card>
@@ -90,41 +50,88 @@
         <x-action :model="$model" :action="['save']"/>
     </x-form>
 
-    @if($isUserMode ?? false)
-    <div class="mt-4 flex justify-center">
-        <a href="#" class="text-sm text-primary underline hidden" id="btn-daftar-tunggu">Aset sedang dipinjam — Masuk Daftar Tunggu</a>
+    @if(isset($model) && $model->exists)
+    @php $canApprove = in_array(auth()->user()->role ?? '', ['developer','admin','supervisor'], true); $st = $model->peminjaman_status ?? ''; @endphp
+    @if($canApprove && $st === 'diajukan')
+    <div class="mt-4 flex flex-wrap gap-2">
+        <a href="{{ route('peminjaman.getApprove', ['id' => $model->peminjaman_id]) }}" onclick="return confirm('Setujui peminjaman ini?')" class="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-success text-white text-sm font-semibold hover:bg-success/90">
+            <span class="material-symbols-outlined">check_circle</span> Approve
+        </a>
+        <button type="button" onclick="document.getElementById('reject-box').classList.toggle('hidden')" class="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-error text-white text-sm font-semibold hover:bg-error/90">
+            <span class="material-symbols-outlined">cancel</span> Tolak
+        </button>
     </div>
+    <div id="reject-box" class="hidden mt-3 bg-white border border-outline-variant rounded-2xl p-4">
+        <p class="text-sm font-semibold mb-2">Alasan penolakan <span class="text-error">*</span></p>
+        <form method="GET" action="{{ route('peminjaman.getReject', ['id' => $model->peminjaman_id]) }}" onsubmit="if(!this.catatan.value.trim()){alert('Catatan wajib diisi');return false;} return confirm('Tolak peminjaman ini?')">
+            <textarea name="catatan" rows="3" placeholder="Tulis alasan penolakan..." class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" required>{{ $model->peminjaman_catatan ?? '' }}</textarea>
+            <div class="flex gap-2 mt-3">
+                <button type="submit" class="h-9 px-4 bg-error text-white rounded-xl text-sm font-semibold">Kirim Penolakan</button>
+                <button type="button" onclick="document.getElementById('reject-box').classList.add('hidden')" class="h-9 px-4 bg-white border border-outline-variant rounded-xl text-sm font-semibold">Batal</button>
+            </div>
+        </form>
+    </div>
+    @if($model->peminjaman_catatan)
+    <div class="mt-3 p-3 rounded-xl bg-surface-container text-sm">
+        <span class="text-xs font-bold text-on-surface-variant uppercase">Catatan:</span>
+        <p class="mt-1">{{ $model->peminjaman_catatan }}</p>
+    </div>
+    @endif
+    @elseif($canApprove && $st === 'aktif')
+    <div class="mt-4 flex flex-wrap gap-2">
+        <a href="{{ route('peminjaman.getReturn', ['id' => $model->peminjaman_id]) }}" onclick="return confirm('Tandai aset sudah dikembalikan?')" class="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-primary text-on-primary text-sm font-semibold">
+            <span class="material-symbols-outlined">assignment_return</span> Tandai Dikembalikan
+        </a>
+    </div>
+    @elseif($st === 'ditolak' && $model->peminjaman_catatan)
+    <div class="mt-4 p-3 rounded-xl bg-error/10 border border-error/20 text-sm">
+        <p class="text-xs font-bold text-error uppercase">Ditolak — Alasan:</p>
+        <p class="mt-1 text-error">{{ $model->peminjaman_catatan }}</p>
+    </div>
+    @endif
+    @endif
+
+    @php $asetLokasiMapJson = json_encode($asetLokasiMap ?? [], JSON_UNESCAPED_UNICODE); @endphp
     <script>
-        (function () {
+        (function(){
+            var lokasiMap = {!! $asetLokasiMapJson !!};
             var availMap = {{ Js::from($availabilityMap ?? []) }};
-            var sel = document.getElementById('select-peminjaman_id_aset');
-            var info = document.getElementById('aset-availability-info');
+            var selAset = document.getElementById('select-peminjaman_id_aset');
+            if (!selAset) return;
+            var info = document.getElementById('aset-lokasi-info');
+            var infoNama = document.getElementById('aset-lokasi-nama');
+            var info2 = document.getElementById('aset-availability-info');
             var box = document.getElementById('aset-availability-box');
             var dot = document.getElementById('aset-availability-dot');
             var txt = document.getElementById('aset-availability-text');
-            var btnTunggu = document.getElementById('btn-daftar-tunggu');
-            function apply() {
-                var id = sel ? sel.value : '';
-                info.classList.toggle('hidden', !id);
-                if (!id) return;
-                var available = availMap[id] !== false;
-                if (available) {
-                    box.className = 'flex items-center gap-2 p-3 rounded-xl text-sm bg-emerald-50 border border-emerald-200';
-                    dot.className = 'w-2.5 h-2.5 rounded-full shrink-0 bg-emerald-500';
-                    txt.className = 'font-medium text-emerald-700';
-                    txt.textContent = 'Aset tersedia — bisa dipinjam sekarang';
-                    btnTunggu.classList.add('hidden');
-                } else {
-                    box.className = 'flex items-center gap-2 p-3 rounded-xl text-sm bg-amber-50 border border-amber-200';
-                    dot.className = 'w-2.5 h-2.5 rounded-full shrink-0 bg-amber-500';
-                    txt.className = 'font-medium text-amber-700';
-                    txt.textContent = 'Aset sedang dipinjam — Anda bisa masuk Daftar Tunggu';
-                    btnTunggu.classList.remove('hidden');
-                    btnTunggu.href = '{{ url('/daftar-tunggu/create') }}?aset=' + id;
+            function apply(){
+                var id = selAset.value;
+                var lokasi = id && lokasiMap[id] ? lokasiMap[id] : null;
+                if (info) {
+                    if (lokasi) { if(infoNama) infoNama.textContent = lokasi.nama; info.classList.remove('hidden'); }
+                    else info.classList.add('hidden');
+                }
+                if (info2) {
+                    info2.classList.toggle('hidden', !id);
+                    if (!id) return;
+                    var available = availMap[id] !== false;
+                    if (info2 && box) {
+                        if (available) {
+                            box.className = 'flex items-center gap-2 p-3 rounded-xl text-sm bg-emerald-50 border border-emerald-200';
+                            dot.className = 'w-2.5 h-2.5 rounded-full shrink-0 bg-emerald-500';
+                            txt.className = 'font-medium text-emerald-700';
+                            txt.textContent = 'Aset tersedia — bisa dipinjam';
+                        } else {
+                            box.className = 'flex items-center gap-2 p-3 rounded-xl text-sm bg-amber-50 border border-amber-200';
+                            dot.className = 'w-2.5 h-2.5 rounded-full shrink-0 bg-amber-500';
+                            txt.className = 'font-medium text-amber-700';
+                            txt.textContent = 'Aset sedang dipinjam';
+                        }
+                    }
                 }
             }
-            if (sel) { sel.addEventListener('change', apply); apply(); }
+            selAset.addEventListener('change', apply);
+            apply();
         })();
     </script>
-    @endif
 </x-layouts::app>

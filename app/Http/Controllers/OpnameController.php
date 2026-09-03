@@ -49,8 +49,13 @@ class OpnameController extends Controller
     public function getUpdate(GeneralRequest $request, $id)
     {
         $data = $this->model->with(['hasLokasi', 'hasPetugas'])->findOrFail($id);
-        $details = OpnameDetail::with(['hasAset'])->where('opname_detail_id_opname', $data->opname_id)->orderBy('opname_detail_ditemukan', 'desc')->orderBy('opname_detail_id_aset')->get();
-        return $this->views($this->template(), ['model' => $data, 'details' => $details]);
+        return $this->views($this->template(), ['model' => $data]);
+    }
+
+    public function getScan(Request $request, $id)
+    {
+        $opname = $this->model->with(['hasLokasi', 'hasPetugas'])->findOrFail($id);
+        return view('pages.opname.scan', ['opname' => $opname]);
     }
 
     public function postUpdate(GeneralRequest $request, $id)
@@ -100,7 +105,6 @@ class OpnameController extends Controller
         return response()->json(['status' => true, 'message' => 'Berhasil scan: '.$aset->aset_nama, 'data' => $detail->fresh()->load('hasAset')]);
     }
 
-    // Report perbandingan — perlu auth tapi tanpa GeneralRequest (bypass policy report)
     public function getReport(Request $request, $id)
     {
         $opname = $this->model->with(['hasLokasi', 'hasPetugas'])->findOrFail($id);
@@ -118,5 +122,15 @@ class OpnameController extends Controller
         $missing = $details->where('opname_detail_ditemukan', false);
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.opname-report', compact('opname', 'details', 'found', 'missing'))->setPaper('A4', 'landscape');
         return $pdf->download('OPNAME-'.$opname->opname_nomor.'.pdf');
+    }
+
+    public function getReportPage(Request $request, $id)
+    {
+        return $this->getReport($request, $id);
+    }
+
+    public function getReportPrintPage(Request $request, $id)
+    {
+        return $this->getReportPrint($request, $id);
     }
 }

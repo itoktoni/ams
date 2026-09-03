@@ -16,18 +16,43 @@
         </div>
     @endif
 
-    {{-- Realtime detail table — auto updates after scan without reload --}}
+    {{-- Detail — cards on mobile, table on desktop --}}
     <div class="mt-4 bg-white border border-outline-variant rounded-2xl overflow-hidden">
         <div class="px-4 py-3 border-b border-outline-variant flex items-center justify-between">
-            <h3 class="font-semibold text-sm">Detail Aset di Lokasi — {{ $opname->hasLokasi?->aset_lokasi_nama ?? '-' }}</h3>
-            <span class="text-xs text-on-surface-variant">{{ $progress['found'] }}/{{ $progress['total'] }} ditemukan</span>
+            <h3 class="font-semibold text-sm">Detail Aset — {{ $opname->hasLokasi?->aset_lokasi_nama ?? '-' }}</h3>
+            <span class="text-xs text-on-surface-variant">{{ $progress['found'] }}/{{ $progress['total'] }}</span>
         </div>
         <div class="px-4 py-2 border-b border-outline-variant/50 grid grid-cols-3 gap-2 text-center text-xs">
             <div class="bg-surface-container rounded-lg py-1.5"><span class="font-bold">{{ $progress['total'] }}</span> total</div>
             <div class="bg-success/10 rounded-lg py-1.5 text-success"><span class="font-bold">{{ $progress['found'] }}</span> ditemukan</div>
             <div class="bg-error/10 rounded-lg py-1.5 text-error"><span class="font-bold">{{ $progress['missing'] }}</span> belum</div>
         </div>
-        <div class="overflow-auto max-h-[420px]">
+
+        {{-- Mobile: cards --}}
+        <div class="md:hidden p-3 space-y-2 max-h-[520px] overflow-auto">
+            @foreach($details as $d)
+            <div class="rounded-2xl border p-3 {{ $d->opname_detail_ditemukan ? 'bg-success/[0.04] border-success/20' : 'bg-error/[0.04] border-error/20' }}">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-bold leading-tight truncate">{{ $d->hasAset?->aset_nama ?? 'Aset #'.$d->opname_detail_id_aset }}</p>
+                        <p class="text-xs font-mono text-on-surface-variant">{{ $d->hasAset?->aset_kode ?? '' }}</p>
+                    </div>
+                    @if($d->opname_detail_ditemukan)
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-success text-white text-xs font-bold shrink-0"><span class="material-symbols-outlined text-sm">check_circle</span> Ya</span>
+                    @else
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-error text-white text-xs font-bold shrink-0">Belum</span>
+                    @endif
+                </div>
+                <div class="mt-2 flex items-center gap-2 text-xs">
+                    <span class="px-2 py-0.5 rounded-full bg-surface-container border border-outline-variant/30">{{ $d->opname_detail_status_sistem ?? '-' }}</span>
+                    <span class="text-on-surface-variant truncate">{{ $d->opname_detail_waktu_scan ? formatDate($d->opname_detail_waktu_scan, true) : '— belum scan' }}</span>
+                </div>
+            </div>
+            @endforeach
+        </div>
+
+        {{-- Desktop: table --}}
+        <div class="hidden md:block overflow-auto max-h-[420px]">
             <table class="w-full text-sm">
                 <thead class="sticky top-0 bg-surface-container text-xs">
                     <tr><th class="text-left p-2">Aset</th><th class="text-left p-2">Status</th><th class="text-left p-2">Ditemukan</th><th class="text-left p-2">Waktu Scan</th></tr>

@@ -73,9 +73,6 @@ Route::middleware(['auth', 'verified', 'access'])->group(function () {
     Route::get('/perpindahan/{id}/berita-acara', [\App\Http\Controllers\PerpindahanController::class, 'getBeritaAcara'])->name('perpindahan.getBeritaAcara');
     Route::get('/aset/{id}/qr', [\App\Http\Controllers\AsetController::class, 'getQr'])->name('aset.getQr');
     Route::get('/aset/{id}/qr-print', [\App\Http\Controllers\AsetController::class, 'getQrPrint'])->name('aset.getQrPrint');
-    Route::post('/opname/{id}/scan', [\App\Http\Controllers\OpnameController::class, 'postScan'])->name('opname.postScan');
-    Route::get('/opname/{id}/report', [\App\Http\Controllers\OpnameController::class, 'getReport'])->name('opname.getReport');
-    Route::get('/opname/{id}/report-print', [\App\Http\Controllers\OpnameController::class, 'getReportPrint'])->name('opname.getReportPrint');
     // Suku Cadang
     Route::auto('/department', 'DepartmentController', ['name' => 'department']);
     Route::auto('/gudang', 'GudangController', ['name' => 'gudang']);

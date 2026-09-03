@@ -121,6 +121,7 @@ class PermintaanSukuCadangController extends Controller
             $request->merge(['permintaan_suku_cadang_id_peminta' => $record->permintaan_suku_cadang_id_peminta]);
             $request->merge(['permintaan_suku_cadang_nomor' => $record->permintaan_suku_cadang_nomor]);
             $request->merge(['department_id' => $record->department_id]);
+            $request->merge(['permintaan_suku_cadang_status' => $record->permintaan_suku_cadang_status]);
         }
 
         $sukuCadangId = $request->input('permintaan_suku_cadang_id_suku_cadang', $record->permintaan_suku_cadang_id_suku_cadang);
@@ -153,5 +154,21 @@ class PermintaanSukuCadangController extends Controller
         ]);
 
         return $this->response(\App\Actions\UpdateAction::run($request, $id, $this->model));
+    }
+
+    public function getApprove(GeneralRequest $request, $id)
+    {
+        if (! in_array(auth()->user()->role ?? '', ['developer','admin','supervisor'], true)) abort(403);
+        $record = $this->model->findOrFail($id);
+        $record->update(['permintaan_suku_cadang_status' => 'disetujui']);
+        return $this->response(['status' => true, 'message' => 'Permintaan disetujui.', 'data' => $record->fresh()]);
+    }
+
+    public function getReject(GeneralRequest $request, $id)
+    {
+        if (! in_array(auth()->user()->role ?? '', ['developer','admin','supervisor'], true)) abort(403);
+        $record = $this->model->findOrFail($id);
+        $record->update(['permintaan_suku_cadang_status' => 'ditolak']);
+        return $this->response(['status' => true, 'message' => 'Permintaan ditolak.', 'data' => $record->fresh()]);
     }
 }
