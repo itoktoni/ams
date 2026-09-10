@@ -34,15 +34,15 @@ class Vendor extends BaseModel
     public static $filterColumns = [
         'vendor_kode' => 'Kode',
         'vendor_nama' => 'Nama',
-        'vendor_kategori' => 'Kategori',
+        'vendor_telepon' => 'Telepon',
         'vendor_email' => 'Email',
     ];
 
     public static $sortColumns = [
         'vendor_kode',
         'vendor_nama',
-        'vendor_kategori',
-        'vendor_rating',
+        'vendor_telepon',
+        'vendor_email',
     ];
 
     protected function casts(): array

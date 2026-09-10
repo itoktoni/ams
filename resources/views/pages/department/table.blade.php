@@ -23,31 +23,41 @@
             <x-slot:head>
                 <x-table-checkbox :model="$model" onchange="toggleAll(this)" />
                 <th>Actions</th>
-                @foreach ($model::$sortColumns as $column)
-                <x-table-sort field="{{ $column }}" label="{{ formatLabel($column) }}" :sortField="$sortField" :sortDir="$sortDir" />
-                @endforeach
-                <th>Sisa Budget</th>
-                <th>Menunggu</th>
-                <th>Tersedia</th>
+                <x-table-sort field="department_kode" label="Kode" :sortField="$sortField" :sortDir="$sortDir" />
+                <x-table-sort field="department_nama" label="Department" :sortField="$sortField" :sortDir="$sortDir" />
+                <x-table-sort field="department_periode" label="Periode" :sortField="$sortField" :sortDir="$sortDir" />
+                <x-table-sort field="department_budget" label="Anggaran" :sortField="$sortField" :sortDir="$sortDir" />
+                <th class="text-right whitespace-nowrap">Terpakai</th>
+                <th class="text-right whitespace-nowrap">Sisa</th>
+                <th class="text-right whitespace-nowrap">Tersedia</th>
             </x-slot:head>
 
             <x-slot:body>
                 @foreach($data as $table)
-                <tr>
+                @php
+                    $sisa = $table->sisa;
+                    $tersedia = $table->tersedia;
+                    $pending = $table->pending;
+                    $pct = $table->department_budget > 0 ? min(100, (($table->department_budget_terpakai + $pending) / $table->department_budget) * 100) : 0;
+                    $over = $tersedia < 0;
+                @endphp
+                <tr class="hover:bg-surface-container-low/50">
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary" />
-                    @foreach ($model::$sortColumns as $column)
-                    <td>
-                        @if(str_contains($column, 'budget'))
-                            {{ formatRupiah($table->$column) }}
-                        @else
-                            {{ $table->$column }}
-                        @endif
+                    <td class="font-mono font-semibold text-primary whitespace-nowrap">{{ $table->department_kode }}</td>
+                    <td class="font-medium whitespace-nowrap">{{ $table->department_nama }}</td>
+                    <td class="whitespace-nowrap"><span class="inline-flex px-2 py-0.5 rounded-full text-xs border bg-surface-container">{{ ucfirst($table->department_periode ?? '-') }}</span></td>
+                    <td class="text-right font-mono whitespace-nowrap">{{ formatRupiah($table->department_budget) }}</td>
+                    <td class="text-right font-mono whitespace-nowrap">{{ formatRupiah($table->department_budget_terpakai) }}</td>
+                    <td class="text-right font-mono whitespace-nowrap {{ $sisa < 0 ? 'text-error font-bold' : '' }}">{{ formatRupiah($sisa) }}</td>
+                    <td class="text-right">
+                        <div class="flex flex-col items-end gap-1">
+                            <span class="font-mono font-semibold {{ $over ? 'text-error' : 'text-primary' }}">{{ formatRupiah($tersedia) }}</span>
+                            <div class="w-20 h-1.5 bg-outline-variant/20 rounded-full overflow-hidden">
+                                <div class="h-full {{ $over ? 'bg-error' : 'bg-primary' }}" style="width: {{ $pct }}%"></div>
+                            </div>
+                        </div>
                     </td>
-                    @endforeach
-                    <td>{{ formatRupiah($table->sisa) }}</td>
-                    <td>{{ formatRupiah($table->pending) }}</td>
-                    <td>{{ formatRupiah($table->tersedia) }}</td>
                 </tr>
                 @endforeach
             </x-slot:body>
@@ -56,42 +66,48 @@
                 <x-table-mobile-select :model="$model" :total="$data"/>
                 <div class="p-3 space-y-3" id="mBody">
                     @foreach($data as $table)
+                    @php
+                        $sisa = $table->sisa;
+                        $tersedia = $table->tersedia;
+                        $pct = $table->department_budget > 0 ? min(100, (($table->department_budget_terpakai + $table->pending) / $table->department_budget) * 100) : 0;
+                    @endphp
                     <div class="bg-white rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden" data-id="{{ $table->field_primary }}" onclick="mToggle(this)">
                         <div class="p-3.5">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <button class="w-6 h-6 rounded-full border border-outline-variant/30 flex items-center justify-center shrink-0" onclick="event.stopPropagation(); mToggle(this.closest('[data-id]'))">
-                                        <span data-check class="icon-[tabler--circle] size-5 text-base-content/20 shrink-0"></span>
-                                    </button>
-                                    @php $titleField = $model::field_name(); $titleVal = $table->{$titleField} ?? $table->field_primary; @endphp
-                                    <span class="text-xs font-mono font-bold text-primary px-2 py-1 rounded-full bg-primary/5 border border-primary/10 truncate max-w-[140px]">{{ Str::limit($titleVal, 24) }}</span>
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-bold text-on-surface truncate">{{ $table->department_nama }}</p>
+                                    <p class="text-xs font-mono text-primary mt-0.5">{{ $table->department_kode }} • {{ ucfirst($table->department_periode ?? '-') }}</p>
                                 </div>
-                                <span class="material-symbols-outlined text-lg text-on-surface-variant/20">chevron_right</span>
-                            </div>
-                            <div class="mt-3">
-                                <p class="text-sm font-bold text-on-surface leading-tight line-clamp-2 break-words">{{ $table->{$model::field_name()} ?? $table->field_primary }}</p>
-                                <p class="text-xs text-on-surface-variant mt-1">Budget {{ formatRupiah($table->department_budget) }} — Sisa {{ formatRupiah($table->sisa) }}</p>
+                                <button class="w-6 h-6 rounded-full border border-outline-variant/30 flex items-center justify-center shrink-0" onclick="event.stopPropagation(); mToggle(this.closest('[data-id]'))">
+                                    <span data-check class="icon-[tabler--circle] size-5 text-base-content/20 shrink-0"></span>
+                                </button>
                             </div>
                             <div class="grid grid-cols-2 gap-2 mt-3">
-                                @foreach(array_slice($model::$sortColumns, 0, 4) as $col)
-                                    @php $val = $table->{$col} ?? null; @endphp
-                                    <div class="bg-surface-container-low/70 rounded-xl px-2.5 py-2">
-                                        <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase truncate">{{ formatLabel($col) }}</p>
-                                        <p class="text-xs font-medium text-on-surface mt-1 truncate">
-                                            @if(str_contains($col, 'budget'))
-                                                {{ is_numeric($val) ? formatRupiah($val) : ($val ?? '-') }}
-                                            @else
-                                                {{ Str::limit($val ?? '-', 24) }}
-                                            @endif
-                                        </p>
+                                <div class="bg-surface-container-low/70 rounded-xl px-2.5 py-2">
+                                    <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase">Anggaran</p>
+                                    <p class="text-xs font-bold font-mono text-on-surface mt-1">{{ formatRupiah($table->department_budget) }}</p>
+                                </div>
+                                <div class="bg-surface-container-low/70 rounded-xl px-2.5 py-2">
+                                    <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase">Terpakai</p>
+                                    <p class="text-xs font-bold font-mono text-on-surface mt-1">{{ formatRupiah($table->department_budget_terpakai) }}</p>
+                                </div>
+                                <div class="bg-surface-container-low/70 rounded-xl px-2.5 py-2">
+                                    <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase">Sisa</p>
+                                    <p class="text-xs font-bold font-mono mt-1 {{ $sisa < 0 ? 'text-error' : 'text-on-surface' }}">{{ formatRupiah($sisa) }}</p>
+                                </div>
+                                <div class="rounded-xl px-2.5 py-2 border {{ $tersedia < 0 ? 'bg-error-container border-error' : 'bg-primary/5 border-primary/20' }}">
+                                    <p class="text-[10px] font-bold tracking-widest uppercase {{ $tersedia < 0 ? 'text-error' : 'text-primary' }}">Tersedia</p>
+                                    <p class="text-xs font-bold font-mono mt-1 {{ $tersedia < 0 ? 'text-error' : 'text-primary' }}">{{ formatRupiah($tersedia) }}</p>
+                                    <div class="mt-1.5 h-1 bg-outline-variant/20 rounded-full overflow-hidden">
+                                        <div class="h-full {{ $tersedia < 0 ? 'bg-error' : 'bg-primary' }}" style="width: {{ $pct }}%"></div>
                                     </div>
-                                @endforeach
+                                </div>
                             </div>
                         </div>
                         <div class="flex items-center justify-between px-3.5 py-2.5 bg-surface-container-low/40 border-t border-outline-variant/10" onclick="event.stopPropagation()">
                             <span class="text-[10px] font-mono text-on-surface-variant/60">ID {{ $table->field_primary }}</span>
                             <div class="flex gap-1.5">
-                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-outline-variant/30 text-on-surface-variant/30"><span class="material-symbols-outlined text-lg">visibility</span></span>
+                                <a href="{{ route('department.getUpdate', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-outline-variant/30 text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-lg">visibility</span></a>
                                 <span onclick="event.stopPropagation()"><x-table-action :model="$model" :id="$table->field_primary" /></span>
                             </div>
                         </div>

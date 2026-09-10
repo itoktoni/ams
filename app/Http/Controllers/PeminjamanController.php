@@ -9,6 +9,7 @@ use App\Http\Requests\GeneralRequest;
 use App\Models\Aset;
 use App\Models\Peminjaman;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PeminjamanController extends Controller
 {
@@ -41,14 +42,6 @@ class PeminjamanController extends Controller
         foreach (Aset::pluck('aset_id_lokasi', 'aset_id') as $asetId => $lokasiId) {
             $asetLokasiMap[$asetId] = ($lokasiId && isset($lokasiMap[$lokasiId])) ? ['id' => (string) $lokasiId, 'nama' => $lokasiMap[$lokasiId]] : null;
         }
-        $budgetInfo = null;
-        if ($user && $user->department_id) {
-            $dept = \App\Models\Department::find($user->department_id);
-            if ($dept) {
-                $terpakai = (float) \App\Models\PermintaanSukuCadang::where('department_id', $dept->department_id)->whereNotIn('permintaan_suku_cadang_status', ['ditolak'])->sum('permintaan_suku_cadang_subtotal');
-                $budgetInfo = ['department' => $dept, 'terpakai' => $terpakai, 'sisa' => (float) $dept->department_budget - $terpakai];
-            }
-        }
 
         $allAsetIds = Aset::pluck('aset_id')->all();
         $sedangDipinjamAll = \App\Models\Peminjaman::whereIn('peminjaman_id_aset', $allAsetIds)->where('peminjaman_status', 'aktif')->whereNull('peminjaman_tanggal_kembali')->pluck('peminjaman_id_aset')->all();
@@ -60,35 +53,32 @@ class PeminjamanController extends Controller
         }
         $activePeminjamanMap = \App\Models\Peminjaman::where('peminjaman_status', 'aktif')->whereNull('peminjaman_tanggal_kembali')->get()->keyBy('peminjaman_id_aset');
 
-        $isPengguna = $user && in_array($user->role, ['pengguna_aset', 'user'], true);
-        if ($isPengguna) {
-            $asetIds = Aset::where('aset_id_penanggung_jawab', $user->id)->pluck('aset_id')->all();
-            $asetOptions = Aset::where('aset_id_penanggung_jawab', $user->id)->orderBy('aset_nama')->pluck('aset_nama', 'aset_id')->toArray();
-            $availMap = [];
-            foreach ($asetIds as $aid) $availMap[$aid] = $availabilityMapAll[$aid] ?? true;
-            $approver = $this->autoApprover();
-            $default = array_merge($default, [
-                'asetOptions' => $asetOptions,
-                'approverId' => $approver?->id,
-                'nowValue' => now()->format('Y-m-d\TH:i'),
-                'availabilityMap' => $availMap,
-                'asetLokasiMap' => $asetLokasiMap,
-                'waitingCountMap' => $waitingCountMap,
-                'activePeminjamanMap' => $activePeminjamanMap,
-                'budgetInfo' => $budgetInfo,
-            ]);
-        } else {
-            $approver = $this->autoApprover();
-            $default = array_merge($default, [
-                'asetLokasiMap' => $asetLokasiMap,
-                'waitingCountMap' => $waitingCountMap,
-                'activePeminjamanMap' => $activePeminjamanMap,
-                'budgetInfo' => $budgetInfo,
-                'approverId' => $approver?->id,
-                'nowValue' => now()->format('Y-m-d\TH:i'),
-                'availabilityMap' => $availabilityMapAll,
-            ]);
+        // Peminjaman: tampilkan semua aset yang bisa dipinjam (aktif & tidak sedang dipinjam)
+        $allAvailableIds = Aset::whereNotIn('aset_id', $sedangDipinjamAll)
+            ->where(function($q){ $q->where('aset_status','aktif')->orWhereNull('aset_status')->orWhere('aset_status',''); })
+            ->orderBy('aset_nama')->pluck('aset_id')->all();
+        // Jika tidak ada yang aktif, fallback ke semua tersedia
+        if (empty($allAvailableIds)) {
+            $allAvailableIds = array_values(array_diff($allAsetIds, $sedangDipinjamAll));
         }
+        $asetOptionsAll = Aset::whereIn('aset_id', $allAvailableIds)->orderBy('aset_nama')->get()
+            ->mapWithKeys(fn($a)=>[$a->aset_id => $a->aset_nama.' — '.$a->aset_kode])->toArray();
+        // Fallback jika masih kosong, pakai semua aset (biar dropdown tidak kosong)
+        if (empty($asetOptionsAll) && !empty($allAsetIds)) {
+            $asetOptionsAll = Aset::whereIn('aset_id', $allAsetIds)->orderBy('aset_nama')->get()
+                ->mapWithKeys(fn($a)=>[$a->aset_id => $a->aset_nama.' — '.$a->aset_kode])->toArray();
+        }
+
+        $approver = $this->autoApprover();
+        $default = array_merge($default, [
+            'asetOptions' => $asetOptionsAll,
+            'approverId' => $approver?->id,
+            'nowValue' => now()->format('Y-m-d\TH:i'),
+            'availabilityMap' => $availabilityMapAll,
+            'asetLokasiMap' => $asetLokasiMap,
+            'waitingCountMap' => $waitingCountMap,
+            'activePeminjamanMap' => $activePeminjamanMap,
+        ]);
 
         return $this->traitShare(array_merge($default, $data));
     }
@@ -98,12 +88,6 @@ class PeminjamanController extends Controller
         $this->handleUploads($request, ['peminjaman_foto_kembali'], 'peminjaman');
         $user = auth()->user();
         $isPengguna = $user && in_array($user->role, ['pengguna_aset', 'user'], true);
-        if ($isPengguna) {
-            $allowed = Aset::where('aset_id_penanggung_jawab', $user->id)->pluck('aset_id')->all();
-            if (! in_array((int) $request->input('peminjaman_id_aset'), $allowed, true)) {
-                return $this->response(['status' => false, 'message' => 'Anda hanya bisa mengajukan peminjaman aset milik Anda.', 'data' => null]);
-            }
-        }
         $asetId = (int) $request->input('peminjaman_id_aset');
         if ($asetId) {
             $sedangDipinjam = Peminjaman::where('peminjaman_id_aset', $asetId)->where('peminjaman_status', 'aktif')->whereNull('peminjaman_tanggal_kembali')->exists();
@@ -163,6 +147,23 @@ class PeminjamanController extends Controller
             $msg .= ' Ada '.$next->hasPeminjam?->name.' menunggu — cek Daftar Tunggu.';
         }
         return $this->response(['status'=>true,'message'=>$msg,'data'=>$r->fresh()]);
+    }
+
+    public function getBeritaAcara(GeneralRequest $request, $id)
+    {
+        $p = $this->model->with(['hasAset.hasKategori','hasAset.hasLokasi','hasPeminjam','hasApprover'])->findOrFail($id);
+        if (! in_array($p->peminjaman_status, ['aktif','selesai','diajukan'], true) && $p->peminjaman_status !== 'aktif') {
+            // tetap izinkan cetak meski diajukan, tapi beri warning badge
+        }
+        $aset = $p->hasAset;
+        if (! $aset) abort(404, 'Aset peminjaman tidak ditemukan.');
+        $pdf = Pdf::loadView('pdf.berita-acara-peminjaman', [
+            'p' => $p,
+            'aset' => $aset,
+            'peminjam' => $p->hasPeminjam,
+            'approver' => $p->hasApprover,
+        ])->setPaper('A4', 'portrait');
+        return $pdf->download('BA-Pinjam-'.$p->peminjaman_nomor.'.pdf');
     }
 
     protected function handleUploads(GeneralRequest $request, array $fields, string $folder, ?array $existing = null): void

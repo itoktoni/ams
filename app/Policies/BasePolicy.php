@@ -117,4 +117,20 @@ class BasePolicy
     {
         return $this->update($user);
     }
+
+    // Custom tiket actions — claim/analisa/selesai/report (PHP method names case-insensitive, so keep one casing only)
+    public function claim(User $user): Response { return $this->accessProtected($user, __FUNCTION__) ? Response::deny() : Response::allow(); }
+    public function analisa(User $user): Response { return $this->accessProtected($user, __FUNCTION__) ? Response::deny() : Response::allow(); }
+    public function selesai(User $user): Response { return $this->accessProtected($user, __FUNCTION__) ? Response::deny() : Response::allow(); }
+    public function reportBulanan(User $user): Response { return $this->accessProtected($user, __FUNCTION__) ? Response::deny() : Response::allow(); }
+
+    public function __call(string $name, array $arguments): Response
+    {
+        // fallback for any undefined policy method (e.g. future custom actions) — allow unless explicitly restricted
+        $user = $arguments[0] ?? null;
+        if ($user instanceof User) {
+            return $this->accessProtected($user, $name) ? Response::deny() : Response::allow();
+        }
+        return Response::allow();
+    }
 }

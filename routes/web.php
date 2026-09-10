@@ -51,24 +51,37 @@ Route::middleware(['auth', 'verified', 'access'])->group(function () {
     Route::auto('/buku-penyusutan', 'BukuPenyusutanController', ['name' => 'buku-penyusutan']);
     // Pemeliharaan
     Route::auto('/teknisi', 'TeknisiController', ['name' => 'teknisi']);
+    Route::auto('/master-group', 'MasterGroupController', ['name' => 'master-group']);
     Route::auto('/tiket', 'TiketController', ['name' => 'tiket']);
+    // custom tiket actions (di luar auto: claim/analisa/selesai/report/show)
+    Route::post('/tiket/claim/{id}', [\App\Http\Controllers\TiketController::class, 'postClaim'])->name('tiket.postClaim');
+    Route::post('/tiket/analisa/{id}', [\App\Http\Controllers\TiketController::class, 'postAnalisa'])->name('tiket.postAnalisa');
+    Route::post('/tiket/selesai/{id}', [\App\Http\Controllers\TiketController::class, 'postSelesai'])->name('tiket.postSelesai');
+    Route::get('/tiket/report-bulanan', [\App\Http\Controllers\TiketController::class, 'getReportBulanan'])->name('tiket.getReportBulanan');
     Route::auto('/batch-tiket', 'BatchTiketController', ['name' => 'batch-tiket']);
     // Alert & Notifikasi
     Route::auto('/alert', 'AlertController', ['name' => 'alert']);
     // Peminjaman
     Route::auto('/peminjaman', 'PeminjamanController', ['name' => 'peminjaman']);
+    Route::get('/peminjaman/{id}/berita-acara', [\App\Http\Controllers\PeminjamanController::class, 'getBeritaAcara'])->name('peminjaman.getBeritaAcara');
     Route::auto('/daftar-tunggu', 'DaftarTungguController', ['name' => 'daftar-tunggu']);
     Route::auto('/reputasi-peminjam', 'ReputasiPeminjamController', ['name' => 'reputasi-peminjam']);
     // Pergerakan & Penghapusan
     Route::auto('/perpindahan', 'PerpindahanController', ['name' => 'perpindahan']);
     Route::auto('/opname', 'OpnameController', ['name' => 'opname']);
     Route::auto('/penghapusan', 'PenghapusanController', ['name' => 'penghapusan']);
+    Route::get('/penghapusan/{id}/berita-acara', [\App\Http\Controllers\PenghapusanController::class, 'getBeritaAcara'])->name('penghapusan.getBeritaAcara');
+    Route::get('/penghapusan/{id}/approve', [\App\Http\Controllers\PenghapusanController::class, 'getApprove'])->name('penghapusan.getApprove');
+    Route::get('/penghapusan/{id}/reject', [\App\Http\Controllers\PenghapusanController::class, 'getReject'])->name('penghapusan.getReject');
     Route::auto('/persetujuan', 'PersetujuanController', ['name' => 'persetujuan']);
     // Pengadaan
     Route::auto('/vendor', 'VendorController', ['name' => 'vendor']);
     Route::auto('/pesanan-pembelian', 'PesananPembelianController', ['name' => 'pesanan-pembelian']);
+    Route::post('/pesanan-pembelian/{id}/terima/{itemId}', [\App\Http\Controllers\PesananPembelianController::class, 'postTerimaBarang'])->name('pesanan-pembelian.terimaBarang');
+    Route::get('/pesanan-pembelian/{id}/invoice-pdf', [\App\Http\Controllers\PesananPembelianController::class, 'getInvoicePdf'])->name('pesanan-pembelian.invoicePdf');
     Route::auto('/penerimaan', 'PenerimaanController', ['name' => 'penerimaan']);
     Route::auto('/faktur', 'FakturController', ['name' => 'faktur']);
+    Route::get('/faktur/{id}/invoice-pdf', [\App\Http\Controllers\FakturController::class, 'getInvoicePdf'])->name('faktur.invoicePdf');
     Route::get('/perpindahan/{id}/approve', [\App\Http\Controllers\PerpindahanController::class, 'getApprove'])->name('perpindahan.getApprove');
     Route::get('/perpindahan/{id}/berita-acara', [\App\Http\Controllers\PerpindahanController::class, 'getBeritaAcara'])->name('perpindahan.getBeritaAcara');
     Route::get('/aset/{id}/qr', [\App\Http\Controllers\AsetController::class, 'getQr'])->name('aset.getQr');
@@ -84,6 +97,7 @@ Route::middleware(['auth', 'verified', 'access'])->group(function () {
     Route::auto('/template-service', 'TemplateServiceController', ['name' => 'template-service']);
     Route::auto('/jadwal-service', 'JadwalServiceController', ['name' => 'jadwal-service']);
     Route::auto('/riwayat-service', 'RiwayatServiceController', ['name' => 'riwayat-service']);
+    Route::post('/riwayat-service/{id}/follow-up', [\App\Http\Controllers\RiwayatServiceController::class, 'postBuatFollowUp'])->name('riwayat-service.buatFollowUp');
     // Penjualan
     Route::auto('/penjualan-aset', 'PenjualanAsetController', ['name' => 'penjualan-aset']);
 

@@ -36,7 +36,9 @@ return [
             'label' => 'Pemeliharaan',
             'items' => [
                 ['route' => 'teknisi.getTable', 'icon' => 'engineering', 'label' => 'Teknisi', 'match' => ['teknisi.*']],
-                ['route' => 'tiket.getTable', 'icon' => 'confirmation_number', 'label' => 'Tiket', 'match' => ['tiket.*']],
+                ['route' => 'master-group.getTable', 'icon' => 'groups', 'label' => 'Master Group', 'match' => ['master-group.*']],
+                ['route' => 'tiket.getTable', 'icon' => 'confirmation_number', 'label' => 'Tiket', 'match' => ['tiket.getTable','tiket.getCreate','tiket.getUpdate','tiket.getShow','tiket.getDelete','tiket.index','tiket.postCreate','tiket.postUpdate','tiket.postClaim','tiket.postAnalisa','tiket.postSelesai']],
+                ['route' => 'tiket.getReportBulanan', 'icon' => 'assessment', 'label' => 'Report Bulanan', 'match' => ['tiket.getReportBulanan']],
                 // ['route' => 'batch-tiket.getTable', 'icon' => 'view_agenda', 'label' => 'Batch Tiket', 'match' => ['batch-tiket.*']],
             ],
         ],
@@ -67,9 +69,7 @@ return [
             'label' => 'Pengadaan',
             'items' => [
                 ['route' => 'vendor.getTable', 'icon' => 'store', 'label' => 'Vendor', 'match' => ['vendor.*']],
-                ['route' => 'pesanan-pembelian.getTable', 'icon' => 'receipt_long', 'label' => 'Pesanan Pembelian', 'match' => ['pesanan-pembelian.*']],
-                ['route' => 'penerimaan.getTable', 'icon' => 'download_done', 'label' => 'Penerimaan', 'match' => ['penerimaan.*']],
-                ['route' => 'faktur.getTable', 'icon' => 'request_quote', 'label' => 'Faktur', 'match' => ['faktur.*']],
+                ['route' => 'pesanan-pembelian.getTable', 'icon' => 'receipt_long', 'label' => 'Purchase Order', 'match' => ['pesanan-pembelian.*']],
             ],
         ],
         [
@@ -100,6 +100,7 @@ return [
         [
             'label' => 'Settings',
             'items' => [
+                ['route' => 'user.getTable', 'icon' => 'person', 'label' => 'Users', 'match' => ['user.*']],
                 ['route' => 'settings.website', 'icon' => 'language', 'label' => 'Website'],
                 ['route' => 'settings.env', 'icon' => 'settings', 'label' => 'Environment'],
                 ['route' => 'native-bridge-test', 'icon' => 'phone_android', 'label' => 'Android App'],

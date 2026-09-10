@@ -2,18 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\CreateAction;
-use App\Actions\UpdateAction;
 use App\Concerns\ControllerTrait;
 use App\Http\Requests\GeneralRequest;
-use App\Models\Alert;
 use App\Models\Aset;
 use App\Models\LokasiAset;
 use App\Models\Tiket;
-use App\Services\PenugasanTeknisiService;
-use App\Services\TelegramService;
+use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class TiketController extends Controller
 {
@@ -78,141 +74,162 @@ class TiketController extends Controller
                 if (!empty($myAsetIds)) $q->orWhereIn('tiket_id_aset', $myAsetIds);
             });
         }
-        // teknisi: hanya tiket yang di-assign ke dia + yang belum di-assign (buka) biar bisa pick
+        // teknisi: hanya tiket yang di-assign ke dia + yang belum di-assign (buka) biar bisa pick — sekarang 1 table users
         if ($user && $user->role === 'teknisi') {
-            $teknisi = \App\Models\Teknisi::where('teknisi_telepon', $user->phone)->orWhere('teknisi_nama', $user->name)->first();
-            // fallback: cari teknisi by user id if linked
-            if (! $teknisi) $teknisi = \App\Models\Teknisi::where('teknisi_id_user', $user->id)->first();
-            if ($teknisi) {
-                $query->where(function($q) use ($teknisi) {
-                    $q->where('tiket_id_teknisi', $teknisi->teknisi_id)
-                      ->orWhereNull('tiket_id_teknisi');
-                });
-            }
+            $query->where(function($q) use ($user) {
+                $q->where('tiket_id_teknisi', $user->id)
+                  ->orWhereNull('tiket_id_teknisi');
+            });
         }
         return $query;
     }
 
     public function postCreate(GeneralRequest $request)
     {
-        $this->handleUploads($request, ['tiket_foto_sebelum', 'tiket_foto_sesudah'], 'tiket');
-
-        $user = auth()->user();
-        // paksa pelapor = user login (anti spoof)
-        $request->merge(['tiket_id_pelapor' => $user?->id]);
-
-        // validasi asset milik pengguna (jika pengguna_aset)
-        if ($user && in_array($user->role, ['pengguna_aset','user'], true)) {
-            $asetId = $request->input('tiket_id_aset');
-            $allowed = Aset::where('aset_id_penanggung_jawab', $user->id)->pluck('aset_id')->all();
-            if (! in_array((int)$asetId, $allowed, true) && ! in_array($asetId, $allowed, true)) {
-                return $this->response(['status'=>false,'message'=>'Anda hanya bisa buat tiket untuk aset yang di-assign kepada Anda.','data'=>null]);
-            }
-            // Lokasi mengikuti aset (pengguna tidak pilih manual)
-            $aset = Aset::find($asetId);
-            if ($aset && $aset->aset_id_lokasi) {
-                $request->merge(['tiket_id_lokasi' => $aset->aset_id_lokasi]);
-            }
-        }
-
-        // fallback lokasi manual (aset tanpa lokasi) — dari select manual di form
-        if (! $request->input('tiket_id_lokasi') && $request->filled('tiket_id_lokasi_manual')) {
-            $request->merge(['tiket_id_lokasi' => $request->input('tiket_id_lokasi_manual')]);
-        }
-        // fallback otomatis dari aset (non-pengguna yang tidak memilih lokasi)
-        if (! $request->input('tiket_id_lokasi') && $request->filled('tiket_id_aset')) {
-            $aset = Aset::find($request->input('tiket_id_aset'));
-            if ($aset && $aset->aset_id_lokasi) {
-                $request->merge(['tiket_id_lokasi' => $aset->aset_id_lokasi]);
-            }
-        }
-
-        // set default jika tidak diisi form: urgensi 'sedang', tanggal lapor now, jatuh tempo dari urgensi, nomor auto
-        if (! $request->input('tiket_tingkat_urgensi')) {
-            $request->merge(['tiket_tingkat_urgensi' => 'sedang']);
-        }
-        if (! $request->input('tiket_tanggal_lapor')) {
-            $request->merge(['tiket_tanggal_lapor' => now()]);
-        }
-        if (! $request->input('tiket_jatuh_tempo') && $request->input('tiket_tingkat_urgensi')) {
-            $hours = match($request->input('tiket_tingkat_urgensi')) {
-                'kritis' => 4,
-                'tinggi' => 8,
-                'sedang' => 24,
-                'rendah' => 72,
-                default => 24,
-            };
-            $request->merge(['tiket_jatuh_tempo' => Carbon::now()->addHours($hours)]);
-        }
-        if (! $request->input('tiket_status')) {
-            $request->merge(['tiket_status' => 'buka']);
-        }
-        if (! $request->input('tiket_nomor')) {
-            $request->merge(['tiket_nomor' => 'T-'.now()->format('YmdHis').'-'.rand(100,999)]);
-        }
-
-        $response = CreateAction::run($request, $this->model);
-
-        // jika sukses buat, notifikasi ke teknisi
-        if (! empty($response['status']) && ! empty($response['data']) && $response['data'] instanceof \App\Models\Tiket) {
-            $tiket = $response['data'];
-            try {
-                // coba auto-assign ke teknisi terdekat (geo)
-                $assigned = app(PenugasanTeknisiService::class)->tugaskanOtomatis($tiket, 'geo');
-                $svc = app(TelegramService::class);
-                if ($tiket->tiket_id_teknisi) {
-                    $tek = \App\Models\Teknisi::find($tiket->tiket_id_teknisi);
-                    if ($tek && $tek->teknisi_telegram_id) $svc->kirimKeTeknisi($tek, $tiket);
-                    else $svc->kirimNotifikasiTiketBaru($tiket);
-                } else {
-                    $sent = $svc->kirimKeKategori($tiket);
-                    if ($sent === 0) $svc->kirimKeSemuaTeknisi($tiket);
-                }
-
-                // buat alert untuk teknisi (atau semua teknisi jika belum ter-assign)
-                $judul = 'Tiket baru: '.($tiket->tiket_nomor ?? '#'.$tiket->tiket_id).' — '.($tiket->tiket_judul ?? '');
-                $pesan = 'Aset '.($tiket->hasAset?->aset_nama ?? '').' ('.($tiket->hasAset?->aset_kode ?? '').') dilaporkan rusak: '.($tiket->tiket_deskripsi ?? $tiket->tiket_judul ?? '').' (oleh '.($user->name ?? '').')';
-                $kunci = 'tiket-baru|tiket|'.$tiket->tiket_id;
-                if (! Alert::where('alert_kunci_dedup', $kunci)->where('alert_status','!=','selesai')->exists()) {
-                    Alert::create([
-                        'alert_tipe' => 'tiket',
-                        'alert_id_referensi' => $tiket->tiket_id,
-                        'alert_tipe_referensi' => 'tiket',
-                        'alert_judul' => $judul,
-                        'alert_pesan' => $pesan,
-                        'alert_level' => match($tiket->tiket_tingkat_urgensi){'kritis'=>'kritis','tinggi'=>'peringatan',default=>'info'},
-                        'alert_kunci_dedup' => $kunci,
-                        'alert_jatuh_tempo' => $tiket->tiket_jatuh_tempo,
-                        'alert_status' => 'terbuka',
-                        'alert_level_eskalasi' => 0,
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('Tiket postCreate notify gagal: '.$e->getMessage());
-            }
-        }
-
-        return $this->response($response);
+        return $this->response(\App\Actions\Tiket\CreateTiketAction::run($request, $this->model));
     }
 
     public function postUpdate(GeneralRequest $request, $id)
     {
-        $m = $this->model->findOrFail($id);
-        $this->handleUploads($request, ['tiket_foto_sebelum', 'tiket_foto_sesudah'], 'tiket', $m->toArray());
-
-        return $this->response(UpdateAction::run($request, $id, $this->model));
+        return $this->response(\App\Actions\Tiket\UpdateTiketAction::run($request, $id, $this->model));
     }
 
-    protected function handleUploads(GeneralRequest $request, array $fields, string $folder, ?array $existing = null): void
+    // Ambil tiket (claim) — teknisi
+    public function postClaim(GeneralRequest $request, $id)
     {
-        foreach ($fields as $f) {
-            if ($request->hasFile($f)) {
-                $request->merge([$f => uploadFile($request->file($f), $folder, ['max_size' => 4096])]);
-            } elseif ($request->boolean('remove_'.$f)) {
-                $request->merge([$f => null]);
-            } else {
-                $request->merge([$f => $existing[$f] ?? null]);
+        $res = \App\Actions\Tiket\ClaimTiketAction::run((int) $id, auth()->id());
+        return $this->response($res);
+    }
+
+    // Simpan analisa → progres
+    public function postAnalisa(Request $request, $id)
+    {
+        $res = \App\Actions\Tiket\AnalisaTiketAction::run($request, (int) $id);
+        return $this->response($res);
+    }
+
+    // Simpan kesimpulan → selesai
+    public function postSelesai(Request $request, $id)
+    {
+        $res = \App\Actions\Tiket\SelesaiTiketAction::run($request, (int) $id);
+        return $this->response($res);
+    }
+
+    // Detail + timeline — dengan pembatasan akses untuk pengguna
+    public function getShow(GeneralRequest $request, $id)
+    {
+        $tiket = $this->model->with(['hasAset', 'hasLokasi', 'hasPelapor', 'hasTeknisi', 'hasLogTiket'])->findOrFail($id);
+        $user = auth()->user();
+        if ($user && in_array($user->role, ['pengguna_aset','user'], true)) {
+            $myAsetIds = Aset::where('aset_id_penanggung_jawab', $user->id)->pluck('aset_id')->all();
+            $isOwner = (int) $tiket->tiket_id_pelapor === (int) $user->id || (!empty($myAsetIds) && in_array($tiket->tiket_id_aset, $myAsetIds, true));
+            if (! $isOwner) {
+                abort(403, 'Anda tidak berhak melihat tiket ini.');
             }
         }
+        if ($user && $user->role === 'teknisi') {
+            // teknisi hanya boleh lihat tiket miliknya atau yang masih buka (pool)
+            if (!empty($tiket->tiket_id_teknisi) && (int) $tiket->tiket_id_teknisi !== (int) $user->id) {
+                abort(403, 'Tiket ini sudah diambil teknisi lain.');
+            }
+        }
+        return $this->views('pages.tiket.show', ['tiket' => $tiket]);
+    }
+
+    // Report bulanan teknisi — bukti pekerjaan harian (hanya teknisi/admin/developer/supervisor)
+    public function getReportBulanan(Request $request)
+    {
+        $user = auth()->user();
+        if ($user && in_array($user->role, ['pengguna_aset','customer','user'], true)) {
+            abort(403, 'Report hanya untuk teknisi.');
+        }
+        $isTeknisi = $user && $user->role === 'teknisi';
+
+        // filter
+        $teknisiId = $request->input('teknisi_id', $isTeknisi ? $user->id : null);
+        $periode = $request->input('periode', now()->format('Y-m'));
+        // periode format YYYY-MM
+        if (! preg_match('/^\d{4}-\d{2}$/', $periode)) $periode = now()->format('Y-m');
+        [$tahun, $bulan] = explode('-', $periode);
+
+        $query = Tiket::with(['hasAset', 'hasLokasi', 'hasPelapor', 'hasTeknisi'])
+            ->whereNotNull('tiket_id_teknisi');
+        if ($teknisiId) $query->where('tiket_id_teknisi', $teknisiId);
+        // bukti pekerjaan = tiket yang pernah dikerjakan teknisi di bulan tersebut (berdasarkan tanggal selesai/analisa/tugas)
+        $query->where(function ($q) use ($tahun, $bulan) {
+            $q->whereYear('tiket_tanggal_selesai', $tahun)->whereMonth('tiket_tanggal_selesai', $bulan)
+              ->orWhere(function ($q2) use ($tahun, $bulan) {
+                  $q2->whereYear('tiket_tanggal_analisa', $tahun)->whereMonth('tiket_tanggal_analisa', $bulan);
+              })
+              ->orWhere(function ($q3) use ($tahun, $bulan) {
+                  $q3->whereYear('tiket_tanggal_tugas', $tahun)->whereMonth('tiket_tanggal_tugas', $bulan)
+                     ->whereIn('tiket_status', ['ditugaskan', 'progres', 'menunggu_part', 'selesai', 'terverifikasi']);
+              });
+        });
+
+        $data = $query->orderBy('tiket_tanggal_selesai', 'desc')->orderBy('tiket_tanggal_tugas', 'desc')->get();
+
+        // agregasi
+        $total = $data->count();
+        $selesai = $data->whereIn('tiket_status', ['selesai', 'terverifikasi'])->count();
+        $progres = $data->where('tiket_status', 'progres')->count();
+        $ditugaskan = $data->where('tiket_status', 'ditugaskan')->count();
+        $terlambat = $data->where('tiket_terlambat_sla', true)->count();
+        $avgDurasi = $total ? round($data->avg('tiket_durasi_menit') ?? 0) : 0;
+
+        $teknisiOptions = User::where('role', 'teknisi')->pluck('name', 'id')->toArray();
+
+        if ($request->input('export') === 'pdf') {
+            return $this->exportReportPdf($data, compact('teknisiId', 'periode', 'total', 'selesai', 'progres', 'ditugaskan', 'terlambat', 'avgDurasi'));
+        }
+        if ($request->input('export') === 'excel') {
+            return $this->exportReportExcel($data, $periode, $teknisiId);
+        }
+
+        return $this->views('pages.tiket.report-bulanan', [
+            'data' => $data,
+            'teknisiId' => $teknisiId,
+            'periode' => $periode,
+            'teknisiOptions' => $teknisiOptions,
+            'total' => $total,
+            'selesai' => $selesai,
+            'progres' => $progres,
+            'ditugaskan' => $ditugaskan,
+            'terlambat' => $terlambat,
+            'avgDurasi' => $avgDurasi,
+            'isTeknisi' => $isTeknisi,
+        ]);
+    }
+
+    private function exportReportPdf($data, $meta)
+    {
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.report-bulanan', array_merge(['data' => $data], $meta));
+        $pdf->setPaper('a4', 'landscape');
+        return $pdf->download('report-tiket-'.$meta['periode'].'.pdf');
+    }
+
+    private function exportReportExcel($data, $periode, $teknisiId)
+    {
+        $filename = 'report-tiket-'.$periode.($teknisiId ? '-teknisi-'.$teknisiId : '').'.csv';
+        $headers = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"{$filename}\""];
+        $callback = function () use ($data) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Nomor', 'Aset', 'Status', 'Teknisi', 'Tgl Dibuat', 'Tgl Diambil', 'Tgl Selesai', 'Analisa', 'Kesimpulan']);
+            foreach ($data as $t) {
+                fputcsv($out, [
+                    $t->tiket_nomor,
+                    $t->hasAset?->aset_nama.' - '.$t->hasAset?->aset_kode,
+                    $t->tiket_status,
+                    $t->hasTeknisi?->name,
+                    $t->tiket_tanggal_lapor,
+                    $t->tiket_tanggal_tugas,
+                    $t->tiket_tanggal_selesai,
+                    str_replace(["\r", "\n"], ' ', (string) $t->tiket_analisa),
+                    str_replace(["\r", "\n"], ' ', (string) $t->tiket_kesimpulan),
+                ]);
+            }
+            fclose($out);
+        };
+        return response()->stream($callback, 200, $headers);
     }
 }

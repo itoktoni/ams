@@ -90,6 +90,6 @@ class RiwayatService extends BaseModel
 
     public function hasTeknisi()
     {
-        return $this->hasOne(Teknisi::class, 'teknisi_id', 'riwayat_service_id_teknisi');
+        return $this->hasOne(User::class, 'id', 'riwayat_service_id_teknisi');
     }
 }

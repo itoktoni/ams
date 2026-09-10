@@ -19,5 +19,6 @@ class DatabaseSeeder extends Seeder
         $this->call(AtkSeeder::class);
         $this->call(CustomFieldSeeder::class);
         $this->call(LelangSeeder::class);
+        $this->call(MasterGroupSeeder::class);
     }
 }

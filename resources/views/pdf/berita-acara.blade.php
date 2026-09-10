@@ -76,7 +76,7 @@
   </table>
 
   <div class="footer">
-    Dicetak otomatis oleh KIRO AMS — {{ now()->format('d/m/Y H:i') }} — Hash: {{ substr(hash('sha256', $aset->aset_id.'|'.$penerima->id.'|'.now()->format('Y-m-d')),0,16) }} • Halaman 1/1
+    Dicetak otomatis oleh {{ config('app.name') }} — {{ now()->format('d/m/Y H:i') }} — Hash: {{ substr(hash('sha256', $aset->aset_id.'|'.$penerima->id.'|'.now()->format('Y-m-d')),0,16) }} • Halaman 1/1
   </div>
 </body>
 </html>

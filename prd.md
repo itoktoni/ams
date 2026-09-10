@@ -1,11 +1,11 @@
-**KIRO ASSET MANAGEMENT SYSTEM**
+**ASSET MANAGEMENT SYSTEM**
 
 (Functional Specification Document)
 
 |     |     |
 | --- | --- |
 | Subjek | Divisi Umum & Administrasi - Pengelolaan Asset Perusahaan |
-| Tempat | Seluruh Cabang Kiro |
+| Tempat | Seluruh Cabang Perusahaan |
 | Peserta | Admin Asset, Teknisi, Manager, Staff Umum, Finance, Procurement |
 | Deskripsi | Sistem manajemen asset terintegrasi untuk pengelolaan siklus hidup asset dari pembelian hingga penghapusan, termasuk penyusutan, tiket perawatan, peminjaman, pergerakan, sparepart, dan service berkala. |
 | Versi | 1.0 |
@@ -14,7 +14,7 @@
 
 ## 1\. PENDAHULUAN
 
-Perusahaan Kiro mengelola ribuan asset yang tersebar di seluruh cabang, mulai dari kendaraan operasional, peralatan kantor, hingga infrastruktur teknologi. Saat ini, pengelolaan aset masih mengandalkan spreadsheet manual dan prosedur berbasis kertas yang rentan terhadap kesalahan data, keterlambatan pelaporan, dan hilangnya jejak riwayat perawatan. Kondisi ini mengakibatkan penyusutan tidak akurat, asset hilang tanpa jejak, biaya maintenance membengkak, dan risiko denda akibat dokumen (SIM, STNK, subscription) yang tidak diperpanjang tepat waktu.
+Perusahaan mengelola ribuan asset yang tersebar di seluruh cabang, mulai dari kendaraan operasional, peralatan kantor, hingga infrastruktur teknologi. Saat ini, pengelolaan aset masih mengandalkan spreadsheet manual dan prosedur berbasis kertas yang rentan terhadap kesalahan data, keterlambatan pelaporan, dan hilangnya jejak riwayat perawatan. Kondisi ini mengakibatkan penyusutan tidak akurat, asset hilang tanpa jejak, biaya maintenance membengkak, dan risiko denda akibat dokumen (SIM, STNK, subscription) yang tidak diperpanjang tepat waktu.
 
 Dengan pertumbuhan jumlah aset yang terus meningkat dan distribusi di berbagai lokasi, diperlukan sebuah sistem informasi terpusat yang mampu melacak seluruh siklus hidup aset secara end-to-end, mengotomasi proses perawatan, dan memberikan visibilitas real-time kepada semua pemangku kepentingan.
 

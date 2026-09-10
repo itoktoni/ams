@@ -65,7 +65,7 @@
                                     </div>
                                     @if($errors->has('telegram_id'))<span class="font-label-caps text-label-caps text-error mt-1 block">{{ $errors->first('telegram_id') }}</span>@else<span class="font-label-caps text-label-caps text-on-surface-variant mt-1 block">Klik button → Start di Telegram → copy ID → paste & Save</span>@endif
                                 </div>
-                                <x-input col="12" name="telegram_username" label="Telegram Username" placeholder="@username" />
+
                             </div>
                         @endbind
                         <div class="flex justify-end mt-4 pt-3 border-t border-outline-variant">

@@ -1,22 +1,20 @@
-<?php /** @var App\Models\Teknisi $model */ ?>
+<?php /** @var App\Models\User $model */ ?>
 
 <x-layouts::app>
     <x-breadcrumb :items="[['url' => moduleRoute('getTable'), 'label' => moduleLabel()], ['url' => '', 'label' => isset($model) && $model->exists ? 'Update' : 'Create']]" />
 
     <x-form :model="$model" enctype="multipart/form-data">
-        <x-card :label="moduleLabel()">
+        <x-card :label="moduleLabel() . ' (User role teknisi — 1 table)'">
             @bind($model ?? null)
 
-                <x-select col="6" name="teknisi_id_user" :options="App\Models\User::getOptions()" />
-                <x-input col="6" name="teknisi_kode" />
-                <x-input col="6" name="teknisi_nama" />
-                <x-input col="6" name="teknisi_telepon" />
-                <x-input col="6" name="teknisi_telegram_id" label="Telegram ID" placeholder="123456789" helper="Chat ID Telegram teknisi untuk notifikasi 1-to-1" />
-                <x-input col="6" name="teknisi_keahlian" placeholder="['elektrikal','it']" />
-                <x-input col="6" name="teknisi_zona" placeholder="['zonaiselatan','zonautara']" />
-                <x-input col="6" name="teknisi_sertifikasi" placeholder="['sertifikat-a','sertifikat-b']" />
-                <x-input col="6" type="number" step="0.01" name="teknisi_rating" />
-                <x-select col="6" name="teknisi_status" :options="App\Enums\Tiket\StatusTeknisiEnum::getOptions()" />
+                <input type="hidden" name="role" value="teknisi">
+                <x-input col="6" name="name" label="Nama Teknisi" />
+                <x-input col="6" name="email" type="email" />
+                @if(!isset($model) || !$model->exists)
+                    <x-input col="6" type="password" name="password" helper="Default password jika kosong" />
+                @endif
+                <x-input col="6" name="phone" label="Telepon" placeholder="08xxxxxxxxxx" />
+                <x-input col="6" name="telegram_id" label="Telegram Chat ID" placeholder="123456789" helper="OPSIONAL — untuk notifikasi" />
 
             @endbind
         </x-card>

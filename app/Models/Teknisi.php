@@ -2,157 +2,68 @@
 
 namespace App\Models;
 
-use Abbasudo\Purity\Traits\Filterable;
-use Abbasudo\Purity\Traits\Sortable;
-use App\Concerns\DefaultEntity;
-use App\Concerns\OptionTrait;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Builder;
 
-class Teknisi extends BaseModel
+/**
+ * Teknisi sekarang dari users role=teknisi (1 table).
+ * Model ini proxy ke users agar kode lama tetap jalan (teknisi_id → id, teknisi_nama → name, dll).
+ */
+class Teknisi extends User
 {
-    use DefaultEntity, Filterable, OptionTrait, Sortable;
+    protected $table = 'users';
 
-    protected $table = 'teknisi';
-
-    protected $primaryKey = 'teknisi_id';
-
-    protected $keyType = 'int';
+    protected $primaryKey = 'id';
 
     public $incrementing = true;
 
-    protected $fillable = [
-        'teknisi_id_user',
-        'teknisi_kode',
-        'teknisi_nama',
-        'teknisi_telepon',
-        'teknisi_telegram_id',
-        'teknisi_keahlian',
-        'teknisi_zona',
-        'teknisi_sertifikasi',
-        'teknisi_rating',
-        'teknisi_total_tiket',
-        'teknisi_total_revisi',
-        'teknisi_latitude',
-        'teknisi_longitude',
-        'teknisi_waktu_posisi',
-        'teknisi_status',
-    ];
+    protected $keyType = 'int';
 
-    public static $filterColumns = [
-        'teknisi_nama' => 'Nama',
-        'teknisi_kode' => 'Kode',
-        'teknisi_status' => 'Status',
-    ];
-
-    public static $sortColumns = [
-        'teknisi_nama',
-        'teknisi_kode',
-        'teknisi_status',
-        'teknisi_rating',
-        'teknisi_total_tiket',
-    ];
-
-    protected function casts(): array
+    protected static function booted(): void
     {
-        return [
-            'teknisi_rating' => 'decimal:2',
-            'teknisi_total_tiket' => 'integer',
-            'teknisi_total_revisi' => 'integer',
-            'teknisi_latitude' => 'decimal:8',
-            'teknisi_longitude' => 'decimal:8',
-            'teknisi_waktu_posisi' => 'datetime',
-        ];
+        static::addGlobalScope('role_teknisi', function (Builder $query) {
+            $query->where('role', 'teknisi');
+        });
+    }
+
+    // Backward compat: $teknisi->teknisi_id, teknisi_nama, etc.
+    public function getTeknisiIdAttribute(): mixed
+    {
+        return $this->attributes['id'] ?? $this->id;
+    }
+
+    public function getTeknisiNamaAttribute(): mixed
+    {
+        return $this->attributes['name'] ?? $this->name;
+    }
+
+    public function getTeknisiTeleponAttribute(): mixed
+    {
+        return $this->attributes['phone'] ?? $this->phone;
+    }
+
+    public function getTeknisiTelegramIdAttribute(): mixed
+    {
+        return $this->attributes['telegram_id'] ?? $this->telegram_id;
+    }
+
+    public function getTeknisiKodeAttribute(): mixed
+    {
+        return $this->attributes['teknisi_kode'] ?? null;
     }
 
     public static function field_name(): string
     {
-        return 'teknisi_nama';
+        return 'name';
     }
 
-    public function rules(): array
-    {
-        return [
-            'teknisi_id_user' => 'nullable|integer',
-            'teknisi_kode' => 'required|string|max:255',
-            'teknisi_nama' => 'required|string|max:255',
-            'teknisi_telepon' => 'nullable|string|max:50',
-            'teknisi_telegram_id' => 'nullable|string|max:50',
-            'teknisi_keahlian' => 'nullable|string',
-            'teknisi_zona' => 'nullable|string',
-            'teknisi_sertifikasi' => 'nullable|string',
-            'teknisi_rating' => 'nullable|numeric',
-            'teknisi_total_tiket' => 'nullable|integer',
-            'teknisi_total_revisi' => 'nullable|integer',
-            'teknisi_latitude' => 'nullable|numeric',
-            'teknisi_longitude' => 'nullable|numeric',
-            'teknisi_waktu_posisi' => 'nullable|date',
-            'teknisi_status' => 'required|string|max:50',
-        ];
-    }
-
-    protected function teknisiKeahlian(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => is_array($value) ? $value : (is_string($value) && str_starts_with(trim($value), '[') ? (json_decode($value, true) ?: []) : ($value ? array_map('trim', explode(',', (string) $value)) : [])),
-            set: function ($value) {
-                if ($value === null || $value === '') return null;
-                if (is_array($value)) return $value;
-                $trim = trim((string) $value);
-                if (str_starts_with($trim, '[')) {
-                    $decoded = json_decode($trim, true);
-                    return is_array($decoded) ? $decoded : [$trim];
-                }
-                return array_values(array_filter(array_map('trim', explode(',', $trim)), fn ($v) => $v !== ''));
-            }
-        );
-    }
-
-    protected function teknisiZona(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => is_array($value) ? $value : (is_string($value) && str_starts_with(trim($value), '[') ? (json_decode($value, true) ?: []) : ($value ? array_map('trim', explode(',', (string) $value)) : [])),
-            set: function ($value) {
-                if ($value === null || $value === '') return null;
-                if (is_array($value)) return $value;
-                $trim = trim((string) $value);
-                if (str_starts_with($trim, '[')) {
-                    $decoded = json_decode($trim, true);
-                    return is_array($decoded) ? $decoded : [$trim];
-                }
-                return array_values(array_filter(array_map('trim', explode(',', $trim)), fn ($v) => $v !== ''));
-            }
-        );
-    }
-
-    protected function teknisiSertifikasi(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => is_array($value) ? $value : (is_string($value) && str_starts_with(trim($value), '[') ? (json_decode($value, true) ?: []) : ($value ? array_map('trim', explode(',', (string) $value)) : [])),
-            set: function ($value) {
-                if ($value === null || $value === '') return null;
-                if (is_array($value)) return $value;
-                $trim = trim((string) $value);
-                if (str_starts_with($trim, '[')) {
-                    $decoded = json_decode($trim, true);
-                    return is_array($decoded) ? $decoded : [$trim];
-                }
-                return array_values(array_filter(array_map('trim', explode(',', $trim)), fn ($v) => $v !== ''));
-            }
-        );
-    }
-
-    public function hasUser()
-    {
-        return $this->hasOne(User::class, 'id', 'teknisi_id_user');
-    }
-
+    // hasKategori lama via kategori_teknisi sudah di-drop — return kosong agar tidak error table not found
     public function hasKategori()
     {
-        return $this->belongsToMany(KategoriAset::class, 'kategori_teknisi', 'teknisi_id', 'kategori_id')->withTimestamps();
+        return $this->belongsToMany(KategoriAset::class, 'master_group_user', 'master_group_user_id_user', 'master_group_user_id_group')->whereRaw('1=0');
     }
 
     public function hasKategoriTeknisi()
     {
-        return $this->hasMany(KategoriTeknisi::class, 'teknisi_id', 'teknisi_id');
+        return $this->hasMany(KategoriTeknisi::class, 'teknisi_id', 'id')->whereRaw('1=0');
     }
 }

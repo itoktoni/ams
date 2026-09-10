@@ -142,12 +142,14 @@ class KategoriAset extends BaseModel
 
     public function hasTeknisi()
     {
-        return $this->belongsToMany(Teknisi::class, 'kategori_teknisi', 'kategori_id', 'teknisi_id')->withTimestamps();
+        // 1 table: teknisi = users role teknisi, kategori mapping sudah di-drop — fallback ke semua teknisi
+        return $this->belongsToMany(User::class, 'master_group_user', 'master_group_user_id_group', 'master_group_user_id_user')->where('role','teknisi')->withTimestamps();
     }
 
     public function hasKategoriTeknisi()
     {
-        return $this->hasMany(KategoriTeknisi::class, 'kategori_id', 'aset_kategori_id');
+        // tabel kategori_teknisi sudah di-drop (1 table) — return kosong agar tidak error
+        return $this->hasMany(User::class, 'id', 'aset_kategori_id')->whereRaw('1=0');
     }
 
 }

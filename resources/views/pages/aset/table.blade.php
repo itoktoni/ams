@@ -52,7 +52,7 @@
                                 <span class="material-symbols-outlined text-lg">print</span>
                             </a>
                             @endcan
-                            <a href="{{ route('aset.getQr', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-800 text-white hover:bg-black transition-colors" title="QR Code">
+                            <a href="{{ route('aset.getQr', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50 text-zinc-900 transition-colors" title="QR Code">
                                 <span class="material-symbols-outlined text-lg">qr_code_2</span>
                             </a>
                             <a href="{{ route('dokumen-aset.getTable') }}?filters[aset_dokumen_id_aset][$eq]={{ $table->field_primary }}" wire:navigate class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-info/10 text-info hover:bg-info/20 transition-colors" title="Dokumen Terkait">
@@ -61,11 +61,6 @@
                             @can('table', app(\App\Models\BukuPenyusutan::class))
                             <a href="{{ route('buku-penyusutan.getTable') }}?filters[buku_penyusutan_id_aset][$eq]={{ $table->field_primary }}" wire:navigate class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-warning/10 text-warning hover:bg-warning/20 transition-colors" title="Detail Penyusutan">
                                 <span class="material-symbols-outlined text-lg">trending_down</span>
-                            </a>
-                            @endcan
-                            @can('recalc', $model)
-                            <a href="{{ route('aset.getRecalc', ['id' => $table->field_primary]) }}" onclick="return confirm('Hapus kalkulasi lama & hitung ulang dari awal s/d bulan ini?')" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-success/10 text-success hover:bg-success/20 transition-colors" title="Kalkulasi Ulang">
-                                <span class="material-symbols-outlined text-lg">calculate</span>
                             </a>
                             @endcan
                         </div>
@@ -194,7 +189,6 @@
                                 <a href="{{ route('aset.getUpdate', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-outline-variant/30 text-on-surface-variant hover:text-primary" title="Detail"><span class="material-symbols-outlined text-lg">visibility</span></a>
                                 <a href="{{ route('dokumen-aset.getTable') }}?filters[aset_dokumen_id_aset][$eq]={{ $table->field_primary }}" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-info/10 text-info" title="Dokumen"><span class="material-symbols-outlined text-lg">description</span></a>
                                 <a href="{{ route('buku-penyusutan.getTable') }}?filters[buku_penyusutan_id_aset][$eq]={{ $table->field_primary }}" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-warning/10 text-warning" title="Penyusutan"><span class="material-symbols-outlined text-lg">trending_down</span></a>
-                                <a href="{{ route('aset.getRecalc', ['id' => $table->field_primary]) }}" onclick="return confirm('Hapus & hitung ulang dari awal s/d bulan ini?')" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-success/10 text-success" title="Kalkulasi Ulang"><span class="material-symbols-outlined text-lg">calculate</span></a>
                                 <span onclick="event.stopPropagation()"><x-table-action :model="$model" :id="$table->field_primary" /></span>
                             </div>
                         </div>

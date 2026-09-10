@@ -3,23 +3,6 @@
 <x-layouts::app>
     <x-breadcrumb :items="[['url' => moduleRoute('getTable'), 'label' => moduleLabel()], ['url' => '', 'label' => isset($model) && $model->exists ? 'Update' : 'Create']]" />
 
-    @if(!empty($budgetInfo))
-    <div class="mb-4 grid grid-cols-3 gap-3">
-        <div class="bg-white rounded-xl border border-outline-variant/20 p-3">
-            <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase">Department</p>
-            <p class="text-sm font-bold mt-1">{{ $budgetInfo['department']->department_nama }} ({{ $budgetInfo['department']->department_kode }})</p>
-        </div>
-        <div class="bg-white rounded-xl border border-outline-variant/20 p-3">
-            <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase">Budget</p>
-            <p class="text-sm font-bold mt-1">{{ formatRupiah($budgetInfo['department']->department_budget) }}</p>
-        </div>
-        <div class="rounded-xl border p-3 {{ $budgetInfo['sisa'] < 0 ? 'bg-error-container border-error' : 'bg-primary/5 border-primary/20' }}">
-            <p class="text-[10px] font-bold tracking-widest uppercase {{ $budgetInfo['sisa'] < 0 ? 'text-error' : 'text-primary' }}">Sisa</p>
-            <p class="text-sm font-bold mt-1 {{ $budgetInfo['sisa'] < 0 ? 'text-error' : 'text-on-surface' }}">{{ formatRupiah($budgetInfo['sisa']) }}</p>
-        </div>
-    </div>
-    @endif
-
     <x-form :model="$model">
         <x-card :label="moduleLabel()">
             @bind($model ?? null)
@@ -59,7 +42,20 @@
             @endbind
         </x-card>
 
-        <x-action :model="$model" :action="['save']"/>
+        <x-action :model="$model" :action="['save']">
+            @if(isset($model) && $model->exists && in_array($model->peminjaman_status ?? '', ['aktif','selesai'], true))
+                <a href="{{ route('peminjaman.getBeritaAcara', ['id' => $model->peminjaman_id]) }}" class="inline-flex items-center gap-1 h-8 md:h-10 px-2.5 md:px-4 text-xs md:text-sm font-semibold rounded-lg bg-white border border-outline-variant text-on-surface hover:bg-surface-container shadow-sm transition-all shrink-0">
+                    <span class="material-symbols-outlined text-base md:text-xl">description</span>
+                    <span class="hidden sm:inline">Berita Acara</span>
+                </a>
+            @endif
+            @if(isset($model) && $model->exists && in_array(auth()->user()->role ?? '', ['developer','admin','supervisor'], true) && ($model->peminjaman_status ?? '') === 'aktif')
+                <a href="{{ route('peminjaman.getReturn', ['id' => $model->peminjaman_id]) }}" onclick="return confirm('Tandai aset sudah dikembalikan?')" class="inline-flex items-center gap-1 h-8 md:h-10 px-2.5 md:px-4 text-xs md:text-sm font-semibold rounded-lg bg-primary text-on-primary hover:bg-primary/90 shadow-sm transition-all shrink-0">
+                    <span class="material-symbols-outlined text-base md:text-xl">assignment_return</span>
+                    <span class="hidden sm:inline">Dikembalikan</span>
+                </a>
+            @endif
+        </x-action>
     </x-form>
 
     @if(isset($model) && $model->exists)
@@ -89,12 +85,6 @@
         <p class="mt-1">{{ $model->peminjaman_catatan }}</p>
     </div>
     @endif
-    @elseif($canApprove && $st === 'aktif')
-    <div class="mt-4 flex flex-wrap gap-2">
-        <a href="{{ route('peminjaman.getReturn', ['id' => $model->peminjaman_id]) }}" onclick="return confirm('Tandai aset sudah dikembalikan?')" class="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-primary text-on-primary text-sm font-semibold">
-            <span class="material-symbols-outlined">assignment_return</span> Tandai Dikembalikan
-        </a>
-    </div>
     @elseif($st === 'ditolak' && $model->peminjaman_catatan)
     <div class="mt-4 p-3 rounded-xl bg-error/10 border border-error/20 text-sm">
         <p class="text-xs font-bold text-error uppercase">Ditolak — Alasan:</p>

@@ -25,6 +25,7 @@ class Aset extends BaseModel
         'aset_id_kategori',
         'aset_id_lokasi',
         'aset_id_penanggung_jawab',
+        'aset_id_group',
         'aset_id_vendor',
         'aset_merek',
         'aset_model',
@@ -89,6 +90,7 @@ class Aset extends BaseModel
             'aset_id_kategori' => 'nullable|integer',
             'aset_id_lokasi' => 'nullable|integer',
             'aset_id_penanggung_jawab' => 'nullable|integer',
+            'aset_id_group' => 'nullable|integer|exists:master_group,master_group_id',
             'aset_id_vendor' => 'nullable|integer',
             'aset_merek' => 'nullable|string|max:80',
             'aset_model' => 'nullable|string|max:80',
@@ -133,6 +135,11 @@ class Aset extends BaseModel
     public function hasVendor()
     {
         return $this->hasOne(Vendor::class, 'vendor_id', 'aset_id_vendor');
+    }
+
+    public function hasGroup()
+    {
+        return $this->hasOne(MasterGroup::class, 'master_group_id', 'aset_id_group');
     }
 
     public function hasDokumen()
@@ -191,6 +198,9 @@ class Aset extends BaseModel
     protected static function booted(): void
     {
         static::creating(function (self $model) {
+            if (empty(trim((string) $model->aset_kode))) {
+                $model->aset_kode = \App\Services\AsetService::kodeAset();
+            }
             if (empty($model->aset_kode_qr)) {
                 $model->aset_kode_qr = strtoupper(\Illuminate\Support\Str::random(10));
             }

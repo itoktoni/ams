@@ -35,12 +35,17 @@ class Tiket extends BaseModel
         'tiket_latitude',
         'tiket_longitude',
         'tiket_foto_sebelum',
+        'tiket_foto_sebelum_hash',
         'tiket_foto_sesudah',
+        'tiket_foto_sesudah_hash',
         'tiket_tanggal_lapor',
         'tiket_tanggal_tugas',
         'tiket_tanggal_mulai',
         'tiket_tanggal_selesai',
         'tiket_tanggal_verifikasi',
+        'tiket_tanggal_analisa',
+        'tiket_tanggal_kesimpulan',
+        'tiket_tanggal_lease_expires',
         'tiket_jatuh_tempo',
         'tiket_terlambat_sla',
         'tiket_level_eskalasi',
@@ -48,6 +53,9 @@ class Tiket extends BaseModel
         'tiket_biaya',
         'tiket_rating',
         'tiket_catatan',
+        'tiket_analisa',
+        'tiket_kesimpulan',
+        'tiket_durasi_menit',
     ];
 
     public static $filterColumns = [
@@ -74,11 +82,15 @@ class Tiket extends BaseModel
             'tiket_rating' => 'decimal:2',
             'tiket_terlambat_sla' => 'boolean',
             'tiket_level_eskalasi' => 'integer',
+            'tiket_durasi_menit' => 'integer',
             'tiket_tanggal_lapor' => 'datetime',
             'tiket_tanggal_tugas' => 'datetime',
             'tiket_tanggal_mulai' => 'datetime',
             'tiket_tanggal_selesai' => 'datetime',
             'tiket_tanggal_verifikasi' => 'datetime',
+            'tiket_tanggal_analisa' => 'datetime',
+            'tiket_tanggal_kesimpulan' => 'datetime',
+            'tiket_tanggal_lease_expires' => 'datetime',
             'tiket_jatuh_tempo' => 'datetime',
         ];
     }
@@ -103,12 +115,17 @@ class Tiket extends BaseModel
             'tiket_latitude' => 'nullable|numeric',
             'tiket_longitude' => 'nullable|numeric',
             'tiket_foto_sebelum' => 'nullable|string|max:255',
+            'tiket_foto_sebelum_hash' => 'nullable|string|max:64',
             'tiket_foto_sesudah' => 'nullable|string|max:255',
+            'tiket_foto_sesudah_hash' => 'nullable|string|max:64',
             'tiket_tanggal_lapor' => 'nullable|date',
             'tiket_tanggal_tugas' => 'nullable|date',
             'tiket_tanggal_mulai' => 'nullable|date',
             'tiket_tanggal_selesai' => 'nullable|date',
             'tiket_tanggal_verifikasi' => 'nullable|date',
+            'tiket_tanggal_analisa' => 'nullable|date',
+            'tiket_tanggal_kesimpulan' => 'nullable|date',
+            'tiket_tanggal_lease_expires' => 'nullable|date',
             'tiket_jatuh_tempo' => 'nullable|date',
             'tiket_terlambat_sla' => 'nullable|boolean',
             'tiket_level_eskalasi' => 'nullable|integer',
@@ -116,6 +133,9 @@ class Tiket extends BaseModel
             'tiket_biaya' => 'nullable|numeric',
             'tiket_rating' => 'nullable|numeric',
             'tiket_catatan' => 'nullable|string',
+            'tiket_analisa' => 'nullable|string',
+            'tiket_kesimpulan' => 'nullable|string',
+            'tiket_durasi_menit' => 'nullable|integer',
         ];
     }
 
@@ -141,7 +161,8 @@ class Tiket extends BaseModel
 
     public function hasTeknisi()
     {
-        return $this->hasOne(Teknisi::class, 'teknisi_id', 'tiket_id_teknisi');
+        // Teknisi sekarang dari users role=teknisi (1 table) — tiket_id_teknisi simpan users.id
+        return $this->hasOne(User::class, 'id', 'tiket_id_teknisi');
     }
 
     public function hasLokasi()

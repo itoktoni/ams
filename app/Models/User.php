@@ -22,7 +22,7 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * @mixin IdeHelperUser
  */
-#[Fillable(['name', 'email', 'password', 'role', 'phone', 'telegram_id', 'telegram_username', 'avatar', 'verified_at'])]
+#[Fillable(['name', 'email', 'password', 'role', 'phone', 'telegram_id', 'avatar', 'verified_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -76,6 +76,8 @@ class User extends Authenticatable
             'email' => 'required|string',
             'role' => 'string',
             'password' => 'string',
+            'phone' => 'nullable|string|max:20',
+            'telegram_id' => 'nullable|string|max:50',
             'avatar' => 'nullable|string|max:255',
         ];
     }

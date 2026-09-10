@@ -24,7 +24,18 @@ class TelegramService
             'disable_web_page_preview' => true,
         ];
         if (! empty($inlineButtons)) {
-            $payload['reply_markup'] = json_encode(['inline_keyboard' => [$inlineButtons]]);
+            // Normalisasi: jika $inlineButtons adalah single button ['text'=>..., 'url'=>...], bungkus jadi row
+            // jika sudah row [[button]], biarkan; jika sudah [[row]] biarkan
+            $isSingleButton = isset($inlineButtons['text']) && isset($inlineButtons['url']);
+            $isRow = isset($inlineButtons[0]) && is_array($inlineButtons[0]) && isset($inlineButtons[0]['text']);
+            if ($isSingleButton) {
+                $payload['reply_markup'] = json_encode(['inline_keyboard' => [[$inlineButtons]]]);
+            } elseif ($isRow) {
+                $payload['reply_markup'] = json_encode(['inline_keyboard' => [$inlineButtons]]);
+            } else {
+                // sudah [[button]] atau [[row]]
+                $payload['reply_markup'] = json_encode(['inline_keyboard' => $inlineButtons]);
+            }
         }
         try {
             $response = \Illuminate\Support\Facades\Http::timeout(10)->post("https://api.telegram.org/bot{$token}/sendMessage", $payload);
@@ -58,10 +69,15 @@ class TelegramService
         ];
 
         if (! empty($inlineButtons)) {
-            // [[ {text, url}, ... ], ...] -> satu baris tombol
-            $payload['reply_markup'] = json_encode([
-                'inline_keyboard' => [$inlineButtons],
-            ]);
+            $isSingleButton = isset($inlineButtons['text']) && isset($inlineButtons['url']);
+            $isRow = isset($inlineButtons[0]) && is_array($inlineButtons[0]) && isset($inlineButtons[0]['text']);
+            if ($isSingleButton) {
+                $payload['reply_markup'] = json_encode(['inline_keyboard' => [[$inlineButtons]]]);
+            } elseif ($isRow) {
+                $payload['reply_markup'] = json_encode(['inline_keyboard' => [$inlineButtons]]);
+            } else {
+                $payload['reply_markup'] = json_encode(['inline_keyboard' => $inlineButtons]);
+            }
         }
 
         try {
@@ -114,21 +130,21 @@ class TelegramService
         return $this->sendToGroup($msg, $buttons[0] ? $buttons[0] : []);
     }
 
-    public function kirimKeTeknisi(\App\Models\Teknisi $teknisi, $tiket): bool
+    public function kirimKeTeknisi(\App\Models\User $teknisi, $tiket): bool
     {
-        if (empty($teknisi->teknisi_telegram_id)) return false;
+        if (empty($teknisi->telegram_id)) return false;
         [$msg, $buttons] = $this->formatTiketBaru($tiket);
-        return $this->sendToChat($teknisi->teknisi_telegram_id, $msg, $buttons[0] ?? []);
+        return $this->sendToChat($teknisi->telegram_id, $msg, $buttons[0] ?? []);
     }
 
     public function kirimKeSemuaTeknisi($tiket, ?string $zona = null): int
     {
-        $q = \App\Models\Teknisi::whereNotNull('teknisi_telegram_id');
-        if ($zona) $q->whereJsonContains('teknisi_zona', $zona);
+        $q = \App\Models\User::where('role','teknisi')->whereNotNull('telegram_id');
+        // teknisi_zona removed — zona filter no-op sekarang
         $sent = 0;
         [$msg, $buttons] = $this->formatTiketBaru($tiket);
         foreach ($q->get() as $tek) {
-            if ($this->sendToChat($tek->teknisi_telegram_id, $msg, $buttons[0] ?? [])) $sent++;
+            if ($this->sendToChat($tek->telegram_id, $msg, $buttons[0] ?? [])) $sent++;
         }
         if ($sent === 0) $this->sendToGroup($msg, $buttons[0] ?? []);
         return $sent;
@@ -136,15 +152,34 @@ class TelegramService
 
     public function kirimKeKategori($tiket): int
     {
-        $aset = \App\Models\Aset::find($tiket->tiket_id_aset);
-        if (! $aset || ! $aset->aset_id_kategori) return $this->kirimKeSemuaTeknisi($tiket);
-        $teknisiIds = \App\Models\KategoriTeknisi::where('kategori_id', $aset->aset_id_kategori)->pluck('teknisi_id')->all();
-        if (empty($teknisiIds)) return $this->kirimKeSemuaTeknisi($tiket);
+        // kategori_teknisi sudah di-drop (1 table users) — langsung ke semua teknisi
+        return $this->kirimKeSemuaTeknisi($tiket);
+    }
+
+    public function kirimKeMasterGroup($tiket, int $groupId): int
+    {
+        $group = \App\Models\MasterGroup::with(['hasUsers','hasTeknisi'])->find($groupId);
+        if (! $group) return 0;
+        $hasUsers = $group->hasUsers && $group->hasUsers->isNotEmpty();
+        $hasTeknisi = $group->hasTeknisi && $group->hasTeknisi->isNotEmpty();
+        if (! $hasUsers && ! $hasTeknisi) return 0;
         [$msg, $buttons] = $this->formatTiketBaru($tiket);
+        // prepend group info
+        $msg = "👥 <b>GROUP: ".e($group->master_group_nama)."</b> (".e($group->master_group_kode).")\n".$msg;
         $sent = 0;
-        foreach (\App\Models\Teknisi::whereIn('teknisi_id', $teknisiIds)->whereNotNull('teknisi_telegram_id')->get() as $tek) {
-            if ($this->sendToChat($tek->teknisi_telegram_id, $msg, $buttons[0] ?? [])) $sent++;
+        // Prioritas: users (1 table) sesuai instruksi — ambil dari users dengan role teknisi
+        if ($hasUsers) {
+            foreach ($group->hasUsers->whereNotNull('telegram_id')->filter(fn($u)=>!empty($u->telegram_id)) as $user) {
+                if ($this->sendToChat($user->telegram_id, $msg, $buttons[0] ?? [])) $sent++;
+            }
         }
+        // Fallback teknisi lama jika belum migrasi
+        if ($sent === 0 && $hasTeknisi) {
+            foreach ($group->hasTeknisi->whereNotNull('teknisi_telegram_id') as $tek) {
+                if ($this->sendToChat($tek->teknisi_telegram_id, $msg, $buttons[0] ?? [])) $sent++;
+            }
+        }
+        // fallback to group chat if no personal telegram
         if ($sent === 0) $this->sendToGroup($msg, $buttons[0] ?? []);
         return $sent;
     }

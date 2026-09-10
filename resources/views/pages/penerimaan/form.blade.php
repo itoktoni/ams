@@ -7,8 +7,9 @@
         <x-card :label="moduleLabel()">
             @bind($model ?? null)
 
-                <x-select col="6" name="penerimaan_id_pesanan" :options="App\Models\PesananPembelian::getOptions()" />
-                <x-input col="6" name="penerimaan_nomor" />
+                <x-select col="12" name="penerimaan_id_gudang" :options="App\Models\Gudang::getOptions()" label="Gudang Tujuan" helper="Wajib pilih gudang terlebih dahulu — stok akan masuk ke gudang ini" class="search" />
+                <x-select col="6" name="penerimaan_id_pesanan" :options="App\Models\PesananPembelian::getOptions()" label="Pesanan Pembelian" helper="PO terkait (opsional jika penerimaan langsung)" class="search" />
+                <x-input col="6" name="penerimaan_nomor" helper="Kosongkan = auto" />
                 <x-input col="6" type="date" name="penerimaan_tanggal" />
                 <x-input col="6" name="penerimaan_penerima" />
                 <x-file

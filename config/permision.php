@@ -34,7 +34,7 @@ $restrict['admin'] = [
     // AMS tambahan: admin boleh semua AMS, jadi tidak di-restrict
 ];
 
-// ── SUPERVISOR (approval): hanya boleh persetujuan + view lain, tidak boleh ubah blueprint/user
+// ── SUPERVISOR (approval): hanya boleh persetujuan + Pergerakan & Penghapusan (perpindahan/opname/penghapusan/persetujuan) + view lain
 $restrict['supervisor'] = [
     'cms-type' => false,
     'field' => false,
@@ -45,8 +45,7 @@ $restrict['supervisor'] = [
     'menu' => false,
     'user' => false,
     'settings.env' => false,
-    // boleh: persetujuan, perpindahan, penghapusan, pesanan-pembelian (approval)
-    // deny create/delete yang bukan approval → contoh batasi
+    // boleh: perpindahan, opname, penghapusan, persetujuan, pesanan-pembelian (approval)
     'kategori-aset' => ['create' => false, 'delete' => false],
     'lokasi-aset' => ['create' => false, 'delete' => false],
     'kelompok-penyusutan' => false,
@@ -55,6 +54,7 @@ $restrict['supervisor'] = [
     'vendor' => false,
     'department' => ['create' => false, 'delete' => false],
     'gudang' => false,
+    // explicit allow Pergerakan & Penghapusan — jangan di-deny (biarkan empty = allow)
 ];
 
 // ── TEKNISI: hanya pemeliharaan + lihat aset

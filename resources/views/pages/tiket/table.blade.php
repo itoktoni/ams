@@ -2,6 +2,21 @@
 
 <x-layouts::app>
     <x-breadcrumb :items="[['url' => '/dashboard', 'label' => 'Home'], ['url' => '', 'label' => moduleLabel()]]" />
+    @php $isTeknisiView = auth()->user()?->role === 'teknisi'; @endphp
+    @if($isTeknisiView)
+    <div class="mb-3 flex flex-wrap gap-2">
+        <a href="{{ route('tiket.getReportBulanan') }}" class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-primary text-on-primary text-sm font-semibold">
+            <span class="material-symbols-outlined text-lg">assessment</span> Report Bulanan Saya
+        </a>
+        <span class="inline-flex items-center text-xs text-on-surface-variant px-2">WIP maks 2 tiket aktif — ambil hanya yang bisa dikerjakan</span>
+    </div>
+    @elseif(auth()->user()?->role !== 'pengguna_aset')
+    <div class="mb-3 flex flex-wrap gap-2">
+        <a href="{{ route('tiket.getReportBulanan') }}" class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-white border border-outline-variant text-sm font-semibold">
+            <span class="material-symbols-outlined text-lg">assessment</span> Report Bulanan Teknisi
+        </a>
+    </div>
+    @endif
     <div class="content mt-4 lg:mt-0">
         {{-- Filters --}}
         <x-filter :per-page="25" :fields="$fields">
@@ -34,9 +49,34 @@
 
             <x-slot:body>
                 @foreach($data as $table)
+                @php
+                    $isTeknisi = auth()->user()?->role === 'teknisi';
+                    $groupOk = true;
+                    if ($isTeknisi && !empty($table->hasAset?->aset_id_group)) {
+                        $groupOk = \Illuminate\Support\Facades\DB::table('master_group_user')
+                            ->where('master_group_user_id_group', $table->hasAset->aset_id_group)
+                            ->where('master_group_user_id_user', auth()->id())->exists();
+                    }
+                    $canClaim = $isTeknisi && $groupOk && $table->tiket_status === 'buka' && empty($table->tiket_id_teknisi);
+                    $isOwner = $isTeknisi && (int) $table->tiket_id_teknisi === (int) auth()->id();
+                @endphp
                 <tr>
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
-                    <x-table-action :model="$model" :id="$table->field_primary" />
+                    <x-table-action :model="$model" :id="$table->field_primary">
+                        @if($canClaim)
+                            <form method="POST" action="{{ route('tiket.postClaim', $table->tiket_id) }}" onsubmit="return confirm('Ambil tiket {{ $table->tiket_nomor }}?')" class="inline-flex">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:bg-primary/90">
+                                    <span class="material-symbols-outlined text-[16px]">hand_gesture</span> Ambil
+                                </button>
+                            </form>
+                        @elseif($isOwner && in_array($table->tiket_status, ['ditugaskan','progres'], true))
+                            <a href="{{ route('tiket.getShow', $table->tiket_id) }}" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-amber-500 text-white text-xs font-semibold">
+                                <span class="material-symbols-outlined text-[16px]">edit_note</span> Kerjakan
+                            </a>
+                        @endif
+                        <a href="{{ route('tiket.getShow', $table->tiket_id) }}" class="inline-flex items-center h-8 px-2.5 rounded-lg bg-surface-container border border-outline-variant text-xs font-medium">Detail</a>
+                    </x-table-action>
                     <td class="min-w-[160px] whitespace-nowrap">{{ $table->hasAset?->aset_nama ? $table->hasAset->aset_nama.' — '.$table->hasAset->aset_kode : ($table->tiket_id_aset ?? '-') }}</td>
                     @foreach ($model::$sortColumns as $column)
                     <td>
@@ -108,9 +148,33 @@
                     <span class="w-2 h-2 rounded-full {{ $scDot }}"></span>
                     <span class="text-xs font-medium {{ $scText }}">{{ $statusLabel }}</span>
                 </div>
-                <div class="flex items-center gap-2" onclick="event.stopPropagation()">
-                    <span class="text-xs text-on-surface-variant/60">{{ $table->tiket_tanggal_lapor ? formatDate($table->tiket_tanggal_lapor) : '-' }}</span>
-                    <x-table-action :model="$model" :id="$table->field_primary" />
+                <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
+                    <span class="text-xs text-on-surface-variant/60 hidden sm:inline">{{ $table->tiket_tanggal_lapor ? formatDate($table->tiket_tanggal_lapor) : '-' }}</span>
+                    {{-- mobile: jangan pakai x-table-action (render <td>) — pakai link manual biar tidak nested td --}}
+                    @can('update', $model)
+                        <a href="{{ moduleRoute('getUpdate', ['id' => $table->field_primary]) }}" wire:navigate class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 text-primary"><span class="material-symbols-outlined text-[16px]">edit</span></a>
+                    @endcan
+                    @can('delete', $model)
+                        <a onclick="return confirm('Are you sure?')" href="{{ moduleRoute('getDelete', ['id' => $table->field_primary]) }}" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-error/10 text-error"><span class="material-symbols-outlined text-[16px]">delete</span></a>
+                    @endcan
+                    @php
+                        $groupOkM = true;
+                        if (auth()->user()?->role === 'teknisi' && !empty($table->hasAset?->aset_id_group)) {
+                            $groupOkM = \Illuminate\Support\Facades\DB::table('master_group_user')
+                                ->where('master_group_user_id_group', $table->hasAset->aset_id_group)
+                                ->where('master_group_user_id_user', auth()->id())->exists();
+                        }
+                        $canClaimM = auth()->user()?->role === 'teknisi' && $groupOkM && $table->tiket_status === 'buka' && empty($table->tiket_id_teknisi); $isOwnerM = auth()->user()?->role === 'teknisi' && (int)$table->tiket_id_teknisi === (int)auth()->id();
+                    @endphp
+                    @if($canClaimM)
+                        <form method="POST" action="{{ route('tiket.postClaim', $table->tiket_id) }}" onsubmit="return confirm('Ambil tiket {{ $table->tiket_nomor }}?')" class="inline-flex">
+                            @csrf
+                            <button type="submit" class="h-7 px-3 rounded-lg bg-primary text-on-primary text-xs font-semibold">Ambil</button>
+                        </form>
+                    @elseif($isOwnerM)
+                        <a href="{{ route('tiket.getShow', $table->tiket_id) }}" class="h-7 px-3 rounded-lg bg-amber-500 text-white text-xs font-semibold inline-flex items-center">Kerjakan</a>
+                    @endif
+                    <a href="{{ route('tiket.getShow', $table->tiket_id) }}" class="h-7 px-2.5 rounded-lg bg-surface-container border border-outline-variant text-xs font-medium inline-flex items-center">Detail</a>
                 </div>
             </div>
         </div>

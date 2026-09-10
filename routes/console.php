@@ -20,3 +20,6 @@ Schedule::command(AmsPenyusutan::class)->monthlyOn(1, '02:00');
 Schedule::command(AmsAlert::class)->hourly();
 Schedule::command(AmsPenugasan::class)->everyFiveMinutes();
 Schedule::command(AmsService::class)->daily();
+Schedule::command(\App\Console\Commands\ReleaseTiketLease::class)->everyMinute();
+Schedule::job(new \App\Jobs\MonitorJadwalServiceJob)->dailyAt('08:00');
+Schedule::job(new \App\Jobs\MonitorJadwalServiceJob)->hourly(); // also check overdue tiap jam

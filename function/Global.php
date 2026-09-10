@@ -44,17 +44,14 @@ function formatDate($value, $datetime = false)
 
 function formatAngka(int|float $value, $simbol = null)
 {
-    // if float has decimals, keep 2 decimals; else 0 decimals (backward compatible)
-    $isFloat = is_float($value) || str_contains((string) $value, '.');
-    if ($isFloat) {
-        $decimals = 2;
-        // trim trailing .00 if not needed? keep decimals for currency
-        if (fmod((float) $value, 1) == 0.0) {
-            $decimals = 0;
-        }
-        return $simbol.number_format((float) $value, $decimals, ',', '.');
+    // hilangkan ,00 kalau bulat — pakai epsilon agar aman dari floating error
+    $num = (float) $value;
+    $isBulat = abs($num - round($num)) < 0.005 || abs(fmod($num, 1)) < 0.005;
+    if ($isBulat) {
+        return $simbol.number_format(round($num), 0, ',', '.');
     }
-    return $simbol.number_format((int) $value, 0, ',', '.');
+    // ada desimal → tampilkan 2 desimal (hilangkan trailing 0 via formatQty jika perlu)
+    return $simbol.number_format($num, 2, ',', '.');
 }
 
 function formatRupiah(mixed $value, bool $withPrefix = true): string
@@ -62,9 +59,10 @@ function formatRupiah(mixed $value, bool $withPrefix = true): string
     if ($value === null || $value === '') return '-';
     $num = (float) $value;
     $prefix = $withPrefix ? 'Rp ' : '';
-    // hilangkan ,00 kalau bulat
-    if (fmod($num, 1) == 0.0) {
-        return $prefix.number_format($num, 0, ',', '.');
+    // hilangkan ,00 kalau bulat — epsilon 0.005 agar 1.500.000,00 → 1.500.000
+    $isBulat = abs($num - round($num)) < 0.005 || abs(fmod($num, 1)) < 0.005;
+    if ($isBulat) {
+        return $prefix.number_format(round($num), 0, ',', '.');
     }
     return $prefix.number_format($num, 2, ',', '.');
 }

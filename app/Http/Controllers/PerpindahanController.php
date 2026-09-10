@@ -28,6 +28,15 @@ class PerpindahanController extends Controller
     public function postCreate(GeneralRequest $request)
     {
         $this->handleUploads($request, ['perpindahan_foto_keluar', 'perpindahan_foto_terima'], 'perpindahan');
+        if (empty(trim((string) $request->input('perpindahan_nomor')))) {
+            $request->merge(['perpindahan_nomor' => 'PND-'.now()->format('YmdHis').'-'.rand(100,999)]);
+        }
+        if (empty($request->input('perpindahan_id_lokasi_asal')) && $request->input('perpindahan_id_aset')) {
+            $aset = Aset::find($request->input('perpindahan_id_aset'));
+            if ($aset && $aset->aset_id_lokasi) $request->merge(['perpindahan_id_lokasi_asal' => $aset->aset_id_lokasi]);
+        }
+        if (empty($request->input('perpindahan_tanggal_request'))) $request->merge(['perpindahan_tanggal_request' => now()->format('Y-m-d H:i:s')]);
+        if (empty($request->input('perpindahan_status'))) $request->merge(['perpindahan_status' => 'diajukan']);
 
         return $this->response(CreateAction::run($request, $this->model));
     }
@@ -36,6 +45,10 @@ class PerpindahanController extends Controller
     {
         $m = $this->model->findOrFail($id);
         $this->handleUploads($request, ['perpindahan_foto_keluar', 'perpindahan_foto_terima'], 'perpindahan', $m->toArray());
+        if (empty($request->input('perpindahan_id_lokasi_asal')) && $request->input('perpindahan_id_aset')) {
+            $aset = Aset::find($request->input('perpindahan_id_aset'));
+            if ($aset && $aset->aset_id_lokasi) $request->merge(['perpindahan_id_lokasi_asal' => $aset->aset_id_lokasi]);
+        }
         $prevStatus = $m->perpindahan_status;
         $response = UpdateAction::run($request, $id, $this->model);
         if (! empty($response['status'])) {

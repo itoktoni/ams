@@ -27,7 +27,6 @@ class ProfileUpdateRequest extends FormRequest
             ],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:1024'],
             'telegram_id' => ['nullable', 'string', 'max:50', 'regex:/^[0-9]+$/'],
-            'telegram_username' => ['nullable', 'string', 'max:50', 'regex:/^@?[a-zA-Z0-9_]+$/'],
         ];
     }
 }

@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\Teknisi;
+use App\Models\User;
 use App\Models\Tiket;
 
 /**
- * Penugasan teknisi ke tiket secara otomatis.
+ * Penugasan teknisi ke tiket secara otomatis — sekarang dari users role=teknisi (1 table).
  *
  * Mode:
  *  - geo  : pilih teknisi tersedia terdekat (haversine) + load balancing.
@@ -17,69 +17,34 @@ class PenugasanTeknisiService
     /**
      * Tugaskan teknisi terbaik ke tiket yang belum punya teknisi.
      */
-    public function tugaskanOtomatis(Tiket $tiket, string $mode = 'geo'): ?Teknisi
+    public function tugaskanOtomatis(Tiket $tiket, string $mode = 'geo'): ?User
     {
-        $kandidat = Teknisi::where('teknisi_status', 'tersedia')->get();
-
-        if ($kandidat->isEmpty()) {
-            return null;
-        }
+        // Simplified: teknisi fields (status/keahlian/geo) sudah dihapus — pilih teknisi dengan load paling ringan (WIP paling sedikit)
+        $kandidats = User::where('role', 'teknisi')->get();
+        if ($kandidats->isEmpty()) return null;
 
         $terbaik = null;
-        $skorTerbaik = -INF;
-
-        foreach ($kandidat as $teknisi) {
-            $skor = 0;
-
-            // Load balancing: teknisi dengan tiket lebih sedikit lebih diprioritaskan
-            $skor -= (int) $teknisi->teknisi_total_tiket;
-
-            // Keahlian: cocok dengan kategori aset mendapat bonus
-            $skor += $this->skorKeahlian($tiket, $teknisi);
-
-            // Jarak (mode geo)
-            if ($mode === 'geo' && $tiket->tiket_latitude && $teknisi->teknisi_latitude) {
-                $jarak = $this->jarak(
-                    (float) $tiket->tiket_latitude,
-                    (float) $tiket->tiket_longitude,
-                    (float) $teknisi->teknisi_latitude,
-                    (float) $teknisi->teknisi_longitude
-                );
-                $skor -= $jarak; // semakin dekat semakin tinggi skor
-            }
-
-            if ($skor > $skorTerbaik) {
-                $skorTerbaik = $skor;
-                $terbaik = $teknisi;
+        $minWip = PHP_INT_MAX;
+        foreach ($kandidats as $tek) {
+            $wip = Tiket::where('tiket_id_teknisi', $tek->id)->whereIn('tiket_status', ['ditugaskan','progres'])->count();
+            if ($wip < $minWip) {
+                $minWip = $wip;
+                $terbaik = $tek;
             }
         }
+        if (!$terbaik) $terbaik = $kandidats->first();
 
         if ($terbaik) {
             $tiket->update([
-                'tiket_id_teknisi' => $terbaik->teknisi_id,
+                'tiket_id_teknisi' => $terbaik->id,
                 'tiket_status' => 'ditugaskan',
                 'tiket_tanggal_tugas' => now(),
             ]);
-            $terbaik->increment('teknisi_total_tiket');
         }
-
         return $terbaik;
     }
 
-    protected function skorKeahlian(Tiket $tiket, Teknisi $teknisi): int
-    {
-        if (empty($teknisi->teknisi_keahlian) || ! is_array($teknisi->teknisi_keahlian)) {
-            return 0;
-        }
-
-        $aset = $tiket->hasAset ?? null;
-        if (! $aset || empty($aset->aset_id_kategori)) {
-            return 0;
-        }
-
-        // Keahlian diasumsikan berbasis kata kunci umum; beri bonus jika ada.
-        return in_array('it', $teknisi->teknisi_keahlian, true) ? 5 : 0;
-    }
+    protected function skorKeahlian(Tiket $tiket, User $teknisi): int { return 0; }
 
     /**
      * Haversine distance in kilometers.

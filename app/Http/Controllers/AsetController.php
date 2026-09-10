@@ -11,6 +11,7 @@ use App\Models\KategoriAset;
 use App\Models\RiwayatService;
 use App\Models\Tiket;
 use App\Models\User;
+use App\Services\AsetService;
 use App\Services\PenyusutanService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
@@ -19,8 +20,6 @@ use Illuminate\Support\Facades\Response;
 class AsetController extends Controller
 {
     use ControllerTrait {
-        postCreate as traitPostCreate;
-        postUpdate as traitPostUpdate;
         getData as traitGetData;
     }
 
@@ -69,23 +68,26 @@ class AsetController extends Controller
     public function postCreate(GeneralRequest $request)
     {
         $this->handleUploads($request, ['aset_foto'], 'aset');
-        $response = $this->traitPostCreate($request);
-        if (! empty($response['data']) && $response['data'] instanceof \App\Models\Aset) {
-            $this->syncSukuCadang($response['data']->aset_id, $request->input('suku_cadang_ids', []));
-        } elseif (is_object($response) && method_exists($response, 'getData')) {
-            $data = $response->getData(true);
-            if (! empty($data['data']['aset_id'])) $this->syncSukuCadang($data['data']['aset_id'], $request->input('suku_cadang_ids', []));
+        // Auto-generate kode asset jika kosong (sesuai AsetService::kodeAset AST/YYYYMM/xxxxx)
+        if (empty(trim((string) $request->input('aset_kode')))) {
+            $request->merge(['aset_kode' => AsetService::kodeAset()]);
         }
-        return $response;
+        $payload = \App\Actions\CreateAction::run($request, $this->model);
+        if (!empty($payload['status']) && $payload['data'] instanceof \App\Models\Aset) {
+            $this->syncSukuCadang($payload['data']->aset_id, $request->input('suku_cadang_ids', []));
+        }
+        return $this->response($payload);
     }
 
     public function postUpdate(GeneralRequest $request, $id)
     {
         $m = $this->model->findOrFail($id);
         $this->handleUploads($request, ['aset_foto'], 'aset', $m->toArray());
-        $response = $this->traitPostUpdate($request, $id);
-        $this->syncSukuCadang((int) $id, $request->input('suku_cadang_ids', []));
-        return $response;
+        $payload = \App\Actions\UpdateAction::run($request, $id, $this->model);
+        if (!empty($payload['status'])) {
+            $this->syncSukuCadang((int) $id, $request->input('suku_cadang_ids', []));
+        }
+        return $this->response($payload);
     }
 
     private function syncSukuCadang(int $asetId, array $scIds): void

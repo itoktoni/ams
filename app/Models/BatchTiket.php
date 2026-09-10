@@ -93,6 +93,7 @@ class BatchTiket extends BaseModel
 
     public function hasTeknisi()
     {
-        return $this->hasOne(Teknisi::class, 'teknisi_id', 'batch_tiket_id_teknisi');
+        // Teknisi sekarang dari users role=teknisi
+        return $this->hasOne(User::class, 'id', 'batch_tiket_id_teknisi');
     }
 }

@@ -22,6 +22,7 @@ class Penerimaan extends BaseModel
 
     protected $fillable = [
         'penerimaan_id_pesanan',
+        'penerimaan_id_gudang',
         'penerimaan_nomor',
         'penerimaan_tanggal',
         'penerimaan_foto',
@@ -32,6 +33,7 @@ class Penerimaan extends BaseModel
     public static $filterColumns = [
         'penerimaan_nomor' => 'Nomor',
         'penerimaan_id_pesanan' => 'Pesanan',
+        'penerimaan_id_gudang' => 'Gudang',
         'penerimaan_penerima' => 'Penerima',
     ];
 
@@ -57,6 +59,7 @@ class Penerimaan extends BaseModel
     {
         return [
             'penerimaan_id_pesanan' => 'nullable|integer',
+            'penerimaan_id_gudang' => 'required|integer|exists:gudang,gudang_id',
             'penerimaan_nomor' => 'required|string|max:60',
             'penerimaan_tanggal' => 'required|date',
             'penerimaan_foto' => 'nullable|string|max:255',
@@ -68,6 +71,11 @@ class Penerimaan extends BaseModel
     public function hasPesanan()
     {
         return $this->hasOne(PesananPembelian::class, 'pesanan_pembelian_id', 'penerimaan_id_pesanan');
+    }
+
+    public function hasGudang()
+    {
+        return $this->hasOne(Gudang::class, 'gudang_id', 'penerimaan_id_gudang');
     }
 
     public function getPenerimaanFotoUrlAttribute(): string

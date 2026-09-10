@@ -7,11 +7,12 @@
         <x-card :label="moduleLabel()">
             @bind($model ?? null)
 
-                <x-input col="6" name="aset_kode" />
+                <x-input col="6" name="aset_kode" helper="Kosongkan = auto-generate (AST/YYYYMM/xxxxx)" placeholder="Kosongkan = auto" />
                 <x-input col="6" name="aset_nama" />
                 <x-select col="6" name="aset_id_kategori" :options="App\Models\KategoriAset::getOptions()" onchange="renderCustomFields()" />
                 <x-select col="6" name="aset_id_lokasi" :options="App\Models\LokasiAset::getOptions()" />
-                <x-select col="6" name="aset_id_penanggung_jawab" :options="App\Models\User::getOptions()" />
+                <x-select col="6" name="aset_id_penanggung_jawab" label="Penanggung Jawab" :options="App\Models\User::getOptions()" />
+                <x-select col="6" name="aset_id_group" label="Group Teknisi" :options="App\Models\MasterGroup::getOptions()" helper="Jika tiket dibuat untuk aset ini, notifikasi ke semua teknisi dalam group" />
                 <x-select col="6" name="aset_id_vendor" :options="App\Models\Vendor::getOptions()" />
                 <x-input col="6" name="aset_merek" />
                 <x-input col="6" name="aset_model" />
@@ -69,7 +70,28 @@
             <p id="custom-fields-empty" class="text-sm text-on-surface-variant">Belum ada custom field untuk kategori ini.</p>
         </x-card>
 
-        <x-action :model="$model" :action="['save']"/>
+        <x-action :model="$model" :action="['save']">
+            @if(isset($model) && $model->exists)
+                @can('beritaAcara', $model)
+                <a href="{{ route('aset.getBeritaAcara', ['id' => $model->aset_id]) }}" class="inline-flex items-center justify-center gap-1 h-8 md:h-10 px-2.5 md:px-4 text-xs md:text-sm font-semibold rounded-lg bg-white border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-all shrink-0" title="Cetak Berita Acara">
+                    <span class="material-symbols-outlined text-base md:text-xl">print</span>
+                    <span class="hidden sm:inline">Berita Acara</span>
+                </a>
+                @endcan
+                @can('table', app(\App\Models\BukuPenyusutan::class))
+                <a href="{{ route('buku-penyusutan.getTable') }}?filters[buku_penyusutan_id_aset][$eq]={{ $model->aset_id }}" wire:navigate class="inline-flex items-center justify-center gap-1 h-8 md:h-10 px-2.5 md:px-4 text-xs md:text-sm font-semibold rounded-lg bg-warning/10 text-warning border border-warning/20 hover:bg-warning/20 transition-all shrink-0" title="Detail Penyusutan">
+                    <span class="material-symbols-outlined text-base md:text-xl">trending_down</span>
+                    <span class="hidden sm:inline">Penyusutan</span>
+                </a>
+                @endcan
+                @can('recalc', $model)
+                <a href="{{ route('aset.getRecalc', ['id' => $model->aset_id]) }}" onclick="return confirm('Hapus kalkulasi lama & hitung ulang dari awal s/d bulan ini?')" class="inline-flex items-center justify-center gap-1 h-8 md:h-10 px-2.5 md:px-4 text-xs md:text-sm font-semibold rounded-lg bg-success text-white hover:bg-success/90 shadow-sm transition-all shrink-0" title="Kalkulasi Ulang">
+                    <span class="material-symbols-outlined text-base md:text-xl">calculate</span>
+                    <span class="hidden sm:inline">Kalkulasi Ulang</span>
+                </a>
+                @endcan
+            @endif
+        </x-action>
     </x-form>
 
     <script>

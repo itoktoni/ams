@@ -29,10 +29,17 @@
                 @foreach ($model::$sortColumns as $column)
                 <x-table-sort field="{{ $column }}" label="{{ formatLabel($column) }}" :sortField="$sortField" :sortDir="$sortDir" />
                 @endforeach
+                <th class="text-left whitespace-nowrap">Daftar Aset</th>
             </x-slot:head>
 
             <x-slot:body>
                 @foreach($data as $table)
+                @php
+                    $daftarAset = $table->template_service_id_kategori
+                        ? \App\Models\Aset::where('aset_id_kategori', $table->template_service_id_kategori)->limit(5)->pluck('aset_nama', 'aset_id')->toArray()
+                        : [];
+                    $totalAset = $table->template_service_id_kategori ? \App\Models\Aset::where('aset_id_kategori', $table->template_service_id_kategori)->count() : 0;
+                @endphp
                 <tr>
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary" />
@@ -45,6 +52,21 @@
                         @endif
                     </td>
                     @endforeach
+                    <td class="min-w-[220px]">
+                        @if(empty($daftarAset))
+                            <span class="text-xs text-on-surface-variant">—</span>
+                        @else
+                            <div class="flex flex-wrap gap-1">
+                                @foreach($daftarAset as $aid => $anama)
+                                    <a href="{{ route('aset.getUpdate', ['id' => $aid]) }}" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-primary/5 border border-primary/10 text-primary hover:bg-primary/10">{{ Str::limit($anama, 18) }}</a>
+                                @endforeach
+                                @if($totalAset > 5)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-surface-container border border-outline-variant/20 text-on-surface-variant">+{{ $totalAset - 5 }} lagi</span>
+                                @endif
+                            </div>
+                            <p class="text-[11px] text-on-surface-variant mt-1">{{ $totalAset }} aset di kategori ini</p>
+                        @endif
+                    </td>
                 </tr>
                 @endforeach
             </x-slot:body>
@@ -89,6 +111,23 @@
                                     </div>
                                 @endforeach
                             </div>
+                            @php
+                                $daftarAsetM = $table->template_service_id_kategori ? \App\Models\Aset::where('aset_id_kategori', $table->template_service_id_kategori)->limit(4)->pluck('aset_nama','aset_id')->toArray() : [];
+                                $totalAsetM = $table->template_service_id_kategori ? \App\Models\Aset::where('aset_id_kategori', $table->template_service_id_kategori)->count() : 0;
+                            @endphp
+                            @if(!empty($daftarAsetM))
+                            <div class="mt-3">
+                                <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase">Daftar Aset ({{ $totalAsetM }})</p>
+                                <div class="flex flex-wrap gap-1.5 mt-1.5">
+                                    @foreach($daftarAsetM as $aid => $anama)
+                                        <a href="{{ route('aset.getUpdate', ['id' => $aid]) }}" class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/5 border border-primary/10 text-primary">{{ Str::limit($anama, 16) }}</a>
+                                    @endforeach
+                                    @if($totalAsetM > 4)
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-surface-container border border-outline-variant/20 text-on-surface-variant">+{{ $totalAsetM - 4 }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                            @endif
                         </div>
                         <div class="flex items-center justify-between px-3.5 py-2.5 bg-surface-container-low/40 border-t border-outline-variant/10" onclick="event.stopPropagation()">
                             <span class="text-[10px] font-mono text-on-surface-variant/60">ID {{ $table->field_primary }}</span>
