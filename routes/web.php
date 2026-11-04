@@ -100,6 +100,8 @@ Route::middleware(['auth', 'verified', 'access'])->group(function () {
     Route::post('/riwayat-service/{id}/follow-up', [\App\Http\Controllers\RiwayatServiceController::class, 'postBuatFollowUp'])->name('riwayat-service.buatFollowUp');
     // Penjualan
     Route::auto('/penjualan-aset', 'PenjualanAsetController', ['name' => 'penjualan-aset']);
+    // Laporan (getIndex → /laporan otomatis dari auto-route)
+    Route::auto('/laporan', 'ReportController', ['name' => 'laporan']);
 
     Route::get('/native-bridge-test', function () {
         return view('pages.settings.native-bridge-test');

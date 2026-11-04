@@ -98,6 +98,25 @@ return [
             ],
         ],
         [
+            'label' => 'Laporan',
+            'items' => [
+                ['route' => 'laporan.getIndex', 'icon' => 'assessment', 'label' => 'Pusat Laporan'],
+                ['route' => 'laporan.getAset', 'icon' => 'precision_manufacturing', 'label' => 'Lap. Aset'],
+                ['route' => 'laporan.getPenyusutan', 'icon' => 'trending_down', 'label' => 'Lap. Penyusutan'],
+                ['route' => 'laporan.getPeminjaman', 'icon' => 'swap_horiz', 'label' => 'Lap. Peminjaman'],
+                ['route' => 'laporan.getPerpindahan', 'icon' => 'local_shipping', 'label' => 'Lap. Perpindahan'],
+                ['route' => 'laporan.getOpname', 'icon' => 'qr_code_scanner', 'label' => 'Lap. Opname'],
+                ['route' => 'laporan.getPenghapusan', 'icon' => 'delete_forever', 'label' => 'Lap. Penghapusan'],
+                ['route' => 'laporan.getPersetujuan', 'icon' => 'how_to_reg', 'label' => 'Lap. Persetujuan'],
+                ['route' => 'laporan.getPurchase', 'icon' => 'receipt_long', 'label' => 'Lap. Purchase'],
+                ['route' => 'laporan.getSukucadang', 'icon' => 'build', 'label' => 'Lap. Suku Cadang'],
+                ['route' => 'laporan.getPergerakan', 'icon' => 'sync', 'label' => 'Lap. Pergerakan Stok'],
+                ['route' => 'laporan.getPermintaan', 'icon' => 'inventory_2', 'label' => 'Lap. Permintaan SC'],
+                ['route' => 'laporan.getService', 'icon' => 'history', 'label' => 'Lap. Service'],
+                ['route' => 'laporan.getPenjualan', 'icon' => 'sell', 'label' => 'Lap. Penjualan'],
+            ],
+        ],
+        [
             'label' => 'Settings',
             'items' => [
                 ['route' => 'user.getTable', 'icon' => 'person', 'label' => 'Users', 'match' => ['user.*']],

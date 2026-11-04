@@ -363,6 +363,28 @@ class CustomFieldSeeder extends Seeder
             }
 
             $mulai = Carbon::today()->subMonths(rand(1, 18))->startOfMonth();
+            // shortcut: infer merek dari nama, tanah/gedung tidak pakai merek
+            $merek = match (true) {
+                str_contains($nama, 'Tanah'), str_contains($nama, 'Gedung') => null,
+                str_contains($nama, 'Toyota') => 'Toyota',
+                str_contains($nama, 'Mitsubishi') => 'Mitsubishi',
+                str_contains($nama, 'Honda') => 'Honda',
+                str_contains($nama, 'Yamaha') => 'Yamaha',
+                str_contains($nama, 'Dell') => 'Dell',
+                str_contains($nama, 'MacBook') => 'Apple',
+                str_contains($nama, 'Laptop'), str_contains($nama, 'PC ') => 'Lenovo',
+                str_contains($nama, 'Lisensi Windows'), str_contains($nama, 'SQL Server') => 'Microsoft',
+                str_contains($nama, 'AutoCAD') => 'Autodesk',
+                str_contains($nama, 'Adobe') => 'Adobe',
+                str_contains($nama, 'CNC') => 'Haas',
+                str_contains($nama, 'Genset') => 'Honda',
+                str_contains($nama, 'AC ') => 'Daikin',
+                str_contains($nama, 'CCTV') => 'Hikvision',
+                str_contains($nama, 'Meja'), str_contains($nama, 'Kursi') => 'Informa',
+                str_contains($nama, 'ECG') => 'Philips',
+                str_contains($nama, 'Infus') => 'B. Braun',
+                default => null,
+            };
             $aset = Aset::updateOrCreate(
                 ['aset_kode' => $kode],
                 [
@@ -371,7 +393,7 @@ class CustomFieldSeeder extends Seeder
                     'aset_id_lokasi' => $lok->aset_lokasi_id,
                     'aset_id_vendor' => $ven->vendor_id,
                     'aset_id_penanggung_jawab' => $userId,
-                    'aset_merek' => 'Brand',
+                    'aset_merek' => $merek,
                     'aset_model' => 'MDL-'.substr($kode, 3),
                     'aset_nomor_seri' => 'SN-'.rand(1000, 9999),
                     'aset_tanggal_perolehan' => $mulai,

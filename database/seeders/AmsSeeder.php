@@ -256,9 +256,21 @@ class AmsSeeder extends Seeder
         $asets = [];
         foreach ($asetData as $i => [$kode, $nama, $kat, $lok, $ven, $harga, $bulan, $metode, $status, $kondisi]) {
             $mulai = Carbon::today()->subMonths(rand(1, 12))->startOfMonth();
+            $merek = match (true) {
+                str_contains($nama, 'Toyota') => 'Toyota',
+                str_contains($nama, 'Dell') => 'Dell',
+                str_contains($nama, 'Cisco') => 'Cisco',
+                str_contains($nama, 'Philips'), str_contains($nama, 'Monitor Patient') => 'Philips',
+                str_contains($nama, 'Infus') => 'B. Braun',
+                str_contains($nama, 'Ambulans') => 'Toyota',
+                str_contains($nama, 'Generator') => 'Honda',
+                str_contains($nama, 'Kompresor') => 'Atlas Copco',
+                str_contains($nama, 'Workstation'), str_contains($nama, 'PC ') => 'HP',
+                default => null,
+            };
             $aset = Aset::create([
                 'aset_kode' => $kode, 'aset_nama' => $nama, 'aset_id_kategori' => $kat,
-                'aset_id_lokasi' => $lok, 'aset_id_vendor' => $ven, 'aset_merek' => 'Brand',
+                'aset_id_lokasi' => $lok, 'aset_id_vendor' => $ven, 'aset_merek' => $merek,
                 'aset_model' => 'MOD-'.($i + 1), 'aset_nomor_seri' => 'SN-'.rand(1000, 9999),
                 'aset_tanggal_perolehan' => $mulai, 'aset_harga_perolehan' => $harga,
                 'aset_nilai_sisa' => round($harga * 0.1, 2), 'aset_masa_manfaat' => $bulan,
@@ -310,9 +322,19 @@ class AmsSeeder extends Seeder
         $extraAssets = [];
         foreach ($extraAsetData as $i => [$kode, $nama, $kat, $lok, $ven, $harga, $bulan, $metode, $status, $kondisi, $cf]) {
             $mulai = Carbon::today()->subMonths(rand(1, 12))->startOfMonth();
+            $merek = match (true) {
+                str_contains($nama, 'Toyota') => 'Toyota',
+                str_contains($nama, 'ThinkPad') => 'Lenovo',
+                str_contains($nama, 'Lisensi MS'), str_contains($nama, 'Office 365') => 'Microsoft',
+                str_contains($nama, 'AutoCAD') => 'Autodesk',
+                str_contains($nama, 'Workstation'), str_contains($nama, 'PC ') => 'HP',
+                str_contains($nama, 'Motor'), str_contains($nama, 'Vario') => 'Honda',
+                str_contains($nama, 'Tanah'), str_contains($nama, 'Gedung') => null,
+                default => null,
+            };
             $aset = Aset::create([
                 'aset_kode' => $kode, 'aset_nama' => $nama, 'aset_id_kategori' => $kat,
-                'aset_id_lokasi' => $lok, 'aset_id_vendor' => $ven, 'aset_merek' => 'Brand',
+                'aset_id_lokasi' => $lok, 'aset_id_vendor' => $ven, 'aset_merek' => $merek,
                 'aset_model' => 'MOD-'.($i + 100), 'aset_nomor_seri' => 'SN-'.rand(1000, 9999),
                 'aset_tanggal_perolehan' => $mulai, 'aset_harga_perolehan' => $harga,
                 'aset_nilai_sisa' => round($harga * 0.1, 2), 'aset_masa_manfaat' => $bulan,
