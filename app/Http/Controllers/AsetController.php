@@ -161,7 +161,8 @@ class AsetController extends Controller
         }
         $qrText = $aset->qr_url;
         $qrDataUri = $this->qrDataUri($qrText, 300);
-        return view('pages.aset.qr', ['aset' => $aset, 'qrText' => $qrText, 'qrDataUri' => $qrDataUri, 'model' => $aset]);
+        $scanLog = $aset->hasScanLog()->limit(20)->get();
+        return view('pages.aset.qr', ['aset' => $aset, 'qrText' => $qrText, 'qrDataUri' => $qrDataUri, 'model' => $aset, 'scanLog' => $scanLog]);
     }
 
     public function getQrPrint(\Illuminate\Http\Request $request, $id)

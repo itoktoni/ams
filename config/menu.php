@@ -63,6 +63,7 @@ return [
                 ['route' => 'opname.getTable', 'icon' => 'qr_code_scanner', 'label' => 'Opname', 'match' => ['opname.*']],
                 ['route' => 'penghapusan.getTable', 'icon' => 'delete_forever', 'label' => 'Penghapusan', 'match' => ['penghapusan.*']],
                 ['route' => 'persetujuan.getTable', 'icon' => 'how_to_reg', 'label' => 'Persetujuan', 'match' => ['persetujuan.*']],
+                ['route' => 'otorisasi-keluar.getTable', 'icon' => 'outbox', 'label' => 'Otorisasi Keluar', 'match' => ['otorisasi-keluar.*']],
             ],
         ],
         [

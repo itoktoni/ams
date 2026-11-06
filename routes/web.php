@@ -74,6 +74,7 @@ Route::middleware(['auth', 'verified', 'access'])->group(function () {
     Route::get('/penghapusan/{id}/approve', [\App\Http\Controllers\PenghapusanController::class, 'getApprove'])->name('penghapusan.getApprove');
     Route::get('/penghapusan/{id}/reject', [\App\Http\Controllers\PenghapusanController::class, 'getReject'])->name('penghapusan.getReject');
     Route::auto('/persetujuan', 'PersetujuanController', ['name' => 'persetujuan']);
+    Route::auto('/otorisasi-keluar', 'OtorisasiKeluarController', ['name' => 'otorisasi-keluar']);
     // Pengadaan
     Route::auto('/vendor', 'VendorController', ['name' => 'vendor']);
     Route::auto('/pesanan-pembelian', 'PesananPembelianController', ['name' => 'pesanan-pembelian']);

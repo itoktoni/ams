@@ -152,6 +152,11 @@ class Aset extends BaseModel
         return $this->hasMany(LogStatusAset::class, 'log_status_aset_id_aset', 'aset_id');
     }
 
+    public function hasScanLog()
+    {
+        return $this->hasMany(LogScanAset::class, 'log_scan_aset_id_aset', 'aset_id')->orderByDesc('log_scan_aset_id');
+    }
+
     /**
      * Peminjaman yang sedang aktif (aset sedang dipinjam).
      * null = tersedia.

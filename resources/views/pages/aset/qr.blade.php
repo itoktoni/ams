@@ -26,5 +26,21 @@
                 </div>
             </div>
         </x-card>
+
+        <x-card label="Riwayat Scan RFID (20 terakhir)" icon="history">
+            <div class="col-span-12">
+                @forelse($scanLog ?? [] as $log)
+                    <div class="flex items-center justify-between gap-3 py-2 border-b border-outline-variant/50 last:border-0">
+                        <div class="text-left">
+                            <p class="text-xs font-mono text-on-surface break-all">{{ $log->log_scan_aset_kode }}</p>
+                            <p class="text-[11px] text-on-surface-variant">{{ $log->log_scan_aset_sumber }} • {{ $log->log_scan_aset_ip ?? '-' }}</p>
+                        </div>
+                        <p class="text-xs font-semibold text-on-surface whitespace-nowrap">{{ formatDate($log->created_at, true) }}</p>
+                    </div>
+                @empty
+                    <p class="text-xs text-on-surface-variant text-center py-3">Belum ada scan tercatat untuk aset ini.</p>
+                @endforelse
+            </div>
+        </x-card>
     </div>
 </x-layouts::app>
