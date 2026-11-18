@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\AmsAlert;
+use App\Console\Commands\AmsPembayaran;
 use App\Console\Commands\AmsPenugasan;
 use App\Console\Commands\AmsPenyusutan;
 use App\Console\Commands\AmsService;
@@ -20,6 +21,7 @@ Schedule::command(AmsPenyusutan::class)->monthlyOn(1, '02:00');
 Schedule::command(AmsAlert::class)->hourly();
 Schedule::command(AmsPenugasan::class)->everyFiveMinutes();
 Schedule::command(AmsService::class)->daily();
+Schedule::command(AmsPembayaran::class)->dailyAt('07:00');
 Schedule::command(\App\Console\Commands\ReleaseTiketLease::class)->everyMinute();
 Schedule::job(new \App\Jobs\MonitorJadwalServiceJob)->dailyAt('08:00');
 Schedule::job(new \App\Jobs\MonitorJadwalServiceJob)->hourly(); // also check overdue tiap jam

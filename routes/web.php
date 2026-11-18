@@ -46,6 +46,7 @@ Route::middleware(['auth', 'verified', 'access'])->group(function () {
     Route::auto('/kategori-aset', 'KategoriAsetController', ['name' => 'kategori-aset']);
     Route::auto('/lokasi-aset', 'LokasiAsetController', ['name' => 'lokasi-aset']);
     Route::auto('/aset', 'AsetController', ['name' => 'aset']);
+    Route::auto('/cetak-label', 'CetakLabelController', ['name' => 'cetak-label']);
     Route::auto('/dokumen-aset', 'DokumenAsetController', ['name' => 'dokumen-aset']);
     Route::auto('/kelompok-penyusutan', 'KelompokPenyusutanController', ['name' => 'kelompok-penyusutan']);
     Route::auto('/buku-penyusutan', 'BukuPenyusutanController', ['name' => 'buku-penyusutan']);
@@ -101,6 +102,8 @@ Route::middleware(['auth', 'verified', 'access'])->group(function () {
     Route::post('/riwayat-service/{id}/follow-up', [\App\Http\Controllers\RiwayatServiceController::class, 'postBuatFollowUp'])->name('riwayat-service.buatFollowUp');
     // Penjualan
     Route::auto('/penjualan-aset', 'PenjualanAsetController', ['name' => 'penjualan-aset']);
+    // Keuangan — pembayaran berkala (air, listrik, internet, dll)
+    Route::auto('/pembayaran', 'PembayaranController', ['name' => 'pembayaran']);
     // Laporan (getIndex → /laporan otomatis dari auto-route)
     Route::auto('/laporan', 'ReportController', ['name' => 'laporan']);
 

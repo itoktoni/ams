@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Alert;
 use App\Models\JadwalService;
+use App\Services\FonnteService;
 use App\Services\TelegramService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -21,6 +22,7 @@ class MonitorJadwalServiceJob implements ShouldQueue
     public function handle(): void
     {
         $telegram = app(TelegramService::class);
+        $fonnte = app(FonnteService::class);
         $now = Carbon::now();
         $thresholds = [
             7 => '7 hari lagi',
@@ -66,7 +68,7 @@ class MonitorJadwalServiceJob implements ShouldQueue
                 $j->update(['jadwal_service_status' => 'terlewat']);
             }
 
-            // Kirim Telegram (dedup via cache / jangan spam tiap run — cek sudah kirim hari ini)
+            // Kirim Telegram + WhatsApp Fonnte (dedup via cache / jangan spam tiap run — cek sudah kirim hari ini)
             $cacheKey = 'telegram_service_'.$j->jadwal_service_id.'_'.$now->format('Y-m-d');
             if (!Cache::has($cacheKey)) {
                 try {
@@ -78,6 +80,14 @@ class MonitorJadwalServiceJob implements ShouldQueue
                         ."<b>Status:</b> ".e($j->jadwal_service_status)."\n"
                         ."<a href=\"".url('/jadwal-service/update/'.$j->jadwal_service_id)."\">🔗 Buka Jadwal</a>";
                     $telegram->sendToGroup($msg);
+                    // WhatsApp butuh plain text (tanpa tag HTML)
+                    $wa = "🔧 *SERVICE JATUH TEMPO*\n"
+                        ."Aset: ".$asetNama."\n"
+                        ."Jadwal: #".$j->jadwal_service_id." • ".($j->hasTemplate?->template_service_nama ?? 'Service')."\n"
+                        ."Jatuh tempo: ".formatDate($j->jadwal_service_tanggal_jatuh_tempo, true)." (".$kapan.")\n"
+                        ."Status: ".$j->jadwal_service_status."\n"
+                        ."Buka: ".url('/jadwal-service/update/'.$j->jadwal_service_id);
+                    $fonnte->sendToGroup($wa);
                     Cache::put($cacheKey, true, 86400);
                 } catch (\Throwable $e) {
                     Log::warning('MonitorJadwalServiceJob telegram gagal: '.$e->getMessage());

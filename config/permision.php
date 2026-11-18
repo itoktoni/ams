@@ -183,6 +183,7 @@ $restrict['customer'] = [
     'riwayat-service' => false,
     'penjualan-aset' => false,
     'permintaan-suku-cadang' => false,
+    'pembayaran' => false,
     // lelang.* tidak di-restrict (public), biar lolos
 ];
 

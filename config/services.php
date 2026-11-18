@@ -60,4 +60,11 @@ return [
         // group tujuan notifikasi (fallback ke TELEGRAM_CHAT_ID jika group tidak diset)
         'group_id' => env('TELEGRAM_GROUP_ID', env('TELEGRAM_CHAT_ID')),
     ],
+
+    'fonnte' => [
+        'url' => env('WHATSAPP_URL', 'https://api.fonnte.com/send'),
+        'token' => env('WHATSAPP_TOKEN', env('FONNTE_TOKEN')),
+        // nomor tujuan default (perorangan/grup WA), mis: 0812xxxx atau id grup
+        'group' => env('FONNTE_GROUP'),
+    ],
 ];

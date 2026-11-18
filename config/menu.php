@@ -27,6 +27,7 @@ return [
                 ['route' => 'kategori-aset.getTable', 'icon' => 'category', 'label' => 'Kategori Aset', 'match' => ['kategori-aset.*']],
                 ['route' => 'lokasi-aset.getTable', 'icon' => 'pin_drop', 'label' => 'Lokasi Aset', 'match' => ['lokasi-aset.*']],
                 ['route' => 'aset.getTable', 'icon' => 'precision_manufacturing', 'label' => 'Aset', 'match' => ['aset.*']],
+                ['route' => 'cetak-label.getIndex', 'icon' => 'print', 'label' => 'Cetak Label Aset', 'match' => ['cetak-label.*']],
                 ['route' => 'dokumen-aset.getTable', 'icon' => 'folder', 'label' => 'Dokumen Aset', 'match' => ['dokumen-aset.*']],
                 ['route' => 'kelompok-penyusutan.getTable', 'icon' => 'percent', 'label' => 'Kelompok Penyusutan', 'match' => ['kelompok-penyusutan.*']],
                 ['route' => 'buku-penyusutan.getTable', 'icon' => 'book', 'label' => 'Buku Penyusutan', 'match' => ['buku-penyusutan.*']],
@@ -96,6 +97,12 @@ return [
             'label' => 'Penjualan',
             'items' => [
                 ['route' => 'penjualan-aset.getTable', 'icon' => 'sell', 'label' => 'Penjualan Aset', 'match' => ['penjualan-aset.*']],
+            ],
+        ],
+        [
+            'label' => 'Keuangan',
+            'items' => [
+                ['route' => 'pembayaran.getTable', 'icon' => 'payments', 'label' => 'Pembayaran', 'match' => ['pembayaran.*']],
             ],
         ],
         [
