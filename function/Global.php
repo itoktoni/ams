@@ -411,6 +411,8 @@ function renderImage(?string $src, string $alt = '', string $class = '', string 
 /**
  * Upload and sanitize a file. Validates MIME type via finfo, strips EXIF,
  * stores to storage/app/public/{folder}, and returns the relative path.
+ * Foto kamera (JPEG/PNG/WebP) yang lebih besar dari max dimensi di-resize
+ * proporsional + kompres ulang (bukan ditolak); file temp selalu dibersihkan.
  *
  * @param  UploadedFile  $file  The uploaded file
  * @param  string  $folder  Subfolder (e.g., 'avatars')
@@ -428,11 +430,7 @@ function uploadFile($file, string $folder = 'uploads', array $options = []): str
     $maxSize = $options['max_size'] ?? 2048; // KB
     $maxWidth = $options['max_width'] ?? 2000;
     $maxHeight = $options['max_height'] ?? 2000;
-
-    // Check file size
-    if ($file->getSize() > $maxSize * 1024) {
-        throw new InvalidArgumentException("Ukuran file maksimal {$maxSize} KB.");
-    }
+    $quality = $options['quality'] ?? 82;
 
     // Validate MIME type using finfo (not just extension)
     $finfo = new finfo(FILEINFO_MIME_TYPE);
@@ -449,25 +447,53 @@ function uploadFile($file, string $folder = 'uploads', array $options = []): str
         throw new InvalidArgumentException("Tipe file tidak diizinkan: {$mime}");
     }
 
-    // Strip EXIF data for privacy/security (JPEG only)
-    if (in_array($mime, ['image/jpeg', 'image/png', 'image/webp']) && function_exists('imagecreatefromstring')) {
-        try {
-            $img = @imagecreatefromstring(file_get_contents($file->getPathname()));
+    // Foto kamera (JPEG/PNG/WebP): jangan tolak dimensi besar — resize + kompres
+    // (sekaligus strip EXIF karena di-encode ulang), lalu cek ukuran hasil akhir.
+    $processedPath = null;
+    try {
+        if (in_array($mime, ['image/jpeg', 'image/png', 'image/webp']) && function_exists('imagecreatefromstring')) {
+            $img = @imagecreatefromstring(@file_get_contents($file->getPathname()));
             if ($img) {
                 $width = imagesx($img);
                 $height = imagesy($img);
-                imagedestroy($img);
-                if ($width > $maxWidth || $height > $maxHeight) {
-                    throw new InvalidArgumentException("Dimensi gambar maksimal {$maxWidth}x{$maxHeight} px.");
+                $scale = min(1, $maxWidth / max(1, $width), $maxHeight / max(1, $height));
+                if ($scale < 1) {
+                    $dstW = max(1, (int) round($width * $scale));
+                    $dstH = max(1, (int) round($height * $scale));
+                    $dst = imagecreatetruecolor($dstW, $dstH);
+                    if (in_array($mime, ['image/png', 'image/webp'])) {
+                        imagealphablending($dst, false);
+                        imagesavealpha($dst, true);
+                        imagefilledrectangle($dst, 0, 0, $dstW, $dstH, imagecolorallocatealpha($dst, 0, 0, 0, 127));
+                    }
+                    imagecopyresampled($dst, $img, 0, 0, 0, 0, $dstW, $dstH, $width, $height);
+                    imagedestroy($img);
+                    $img = $dst;
                 }
+                $ext = $mime === 'image/png' ? '.png' : ($mime === 'image/webp' && function_exists('imagewebp') ? '.webp' : '.jpg');
+                $tmp = rtrim(sys_get_temp_dir(), '/\\').'/upl'.uniqid().$ext;
+                $saved = match (true) {
+                    str_ends_with($tmp, '.png') => imagepng($img, $tmp, 6),
+                    str_ends_with($tmp, '.webp') => imagewebp($img, $tmp, $quality),
+                    default => imagejpeg($img, $tmp, $quality),
+                };
+                imagedestroy($img);
+                if (! $saved || ! is_file($tmp)) {
+                    throw new InvalidArgumentException('Gagal memproses gambar.');
+                }
+                if (filesize($tmp) > $maxSize * 1024) {
+                    @unlink($tmp);
+                    throw new InvalidArgumentException("Ukuran file maksimal {$maxSize} KB (setelah kompresi).");
+                }
+                $processedPath = $tmp;
+            } elseif ($file->getSize() > $maxSize * 1024) {
+                // GD tidak bisa baca → fallback ke file asli, tetap batasi ukuran
+                throw new InvalidArgumentException("Ukuran file maksimal {$maxSize} KB.");
             }
-        } catch (Throwable $e) {
-            if ($e instanceof InvalidArgumentException) {
-                throw $e;
-            }
-            // If GD fails, still allow the upload (finfo already validated)
+        } elseif ($file->getSize() > $maxSize * 1024) {
+            // GIF/SVG: tanpa proses ulang, batasi ukuran file asli
+            throw new InvalidArgumentException("Ukuran file maksimal {$maxSize} KB.");
         }
-    }
 
     // Sanitize filename
     $filename = sanitizeFileName($file->getClientOriginalName());
@@ -478,8 +504,18 @@ function uploadFile($file, string $folder = 'uploads', array $options = []): str
         mkdir($targetDir, 0755, true);
     }
 
-    // Move file to storage — coba storeAs, fallback ke move manual (Windows junction / permission)
-    $path = $file->storeAs('public/'.$folder, $filename);
+    // Move file to storage — hasil kompres (jika ada) di-rename langsung,
+    // selain itu coba storeAs, fallback ke move manual (Windows junction / permission)
+        if ($processedPath) {
+            if (! @rename($processedPath, $targetDir.'/'.$filename)) {
+                copy($processedPath, $targetDir.'/'.$filename);
+            }
+            $processedPath = null; // sudah pindah → jangan dihapus
+            $path = 'public/'.$folder.'/'.$filename;
+            $fullPath = storage_path('app/'.$path);
+        } else {
+            $path = $file->storeAs('public/'.$folder, $filename);
+        }
 
     if (! $path) {
         throw new InvalidArgumentException('Gagal menyimpan file.');
@@ -508,6 +544,13 @@ function uploadFile($file, string $folder = 'uploads', array $options = []): str
 
     // Return relative public path
     return $folder.'/'.$filename;
+    } catch (Throwable $e) {
+        // Bersihkan file temp hasil kompres jika gagal di tengah jalan
+        if ($processedPath && is_file($processedPath)) {
+            @unlink($processedPath);
+        }
+        throw $e instanceof InvalidArgumentException ? $e : new InvalidArgumentException('Gagal menyimpan file: '.$e->getMessage());
+    }
 }
 
 /**
