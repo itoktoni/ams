@@ -454,6 +454,25 @@ function uploadFile($file, string $folder = 'uploads', array $options = []): str
         if (in_array($mime, ['image/jpeg', 'image/png', 'image/webp']) && function_exists('imagecreatefromstring')) {
             $img = @imagecreatefromstring(@file_get_contents($file->getPathname()));
             if ($img) {
+                // Koreksi orientasi EXIF (foto HP portrait sering tersimpan landscape + flag rotasi)
+                if ($mime === 'image/jpeg' && function_exists('exif_read_data')) {
+                    $exif = @exif_read_data($file->getPathname());
+                    $orient = (int) ($exif['Orientation'] ?? 1);
+                    $rotated = null;
+                    switch ($orient) {
+                        case 2: imageflip($img, IMG_FLIP_HORIZONTAL); break;
+                        case 3: $rotated = imagerotate($img, 180, 0); break;
+                        case 4: imageflip($img, IMG_FLIP_VERTICAL); break;
+                        case 5: imageflip($img, IMG_FLIP_HORIZONTAL); $rotated = imagerotate($img, 270, 0); break;
+                        case 6: $rotated = imagerotate($img, 270, 0); break;
+                        case 7: imageflip($img, IMG_FLIP_HORIZONTAL); $rotated = imagerotate($img, 90, 0); break;
+                        case 8: $rotated = imagerotate($img, 90, 0); break;
+                    }
+                    if ($rotated instanceof \GdImage) {
+                        imagedestroy($img);
+                        $img = $rotated;
+                    }
+                }
                 $width = imagesx($img);
                 $height = imagesy($img);
                 $scale = min(1, $maxWidth / max(1, $width), $maxHeight / max(1, $height));
