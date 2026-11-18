@@ -38,6 +38,7 @@ class Aset extends BaseModel
         'aset_tanggal_mulai_susut',
         'aset_status',
         'aset_kondisi',
+        'aset_bisa_dipinjam',
         'aset_foto',
         'aset_kode_qr',
         'aset_nomor_label',
@@ -74,6 +75,7 @@ class Aset extends BaseModel
             'aset_nilai_sisa' => 'decimal:2',
             'aset_masa_manfaat' => 'integer',
             'aset_jam_pakai' => 'decimal:2',
+            'aset_bisa_dipinjam' => 'boolean',
             'aset_custom_fields' => 'array',
         ];
     }
@@ -104,6 +106,7 @@ class Aset extends BaseModel
             'aset_tanggal_mulai_susut' => 'nullable|date',
             'aset_status' => 'nullable|string|max:30',
             'aset_kondisi' => 'nullable|string|max:30',
+            'aset_bisa_dipinjam' => 'nullable|boolean',
             'aset_foto' => 'nullable|string|max:255',
             'aset_kode_qr' => 'nullable|string|max:100',
             'aset_nomor_label' => 'nullable|string|max:100',

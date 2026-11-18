@@ -137,8 +137,8 @@ return [
 
     'bottom_nav' => [
 
-        ['route' => 'dashboard', 'icon' => 'home', 'label' => 'Home'],
-        ['route' => 'aset.getTable', 'icon' => 'precision_manufacturing', 'label' => 'Aset'],
+        ['route' => 'dashboard', 'icon' => 'home', 'label' => 'Dashboard'],
+        ['route' => 'aset.getTable', 'icon' => 'precision_manufacturing', 'label' => 'Data Aset'],
         ['route' => 'tiket.getTable', 'icon' => 'confirmation_number', 'label' => 'Tiket'],
         ['route' => 'alert.getTable', 'icon' => 'warning', 'label' => 'Alert'],
         ['route' => 'peminjaman.getTable', 'icon' => 'swap_horiz', 'label' => 'Pinjam'],

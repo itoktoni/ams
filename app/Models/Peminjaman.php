@@ -32,6 +32,17 @@ class Peminjaman extends BaseModel
         'peminjaman_denda',
         'peminjaman_kondisi_kembali',
         'peminjaman_foto_kembali',
+        'peminjaman_km_awal',
+        'peminjaman_foto_km_awal',
+        'peminjaman_bensin_awal',
+        'peminjaman_foto_bensin_awal',
+        'peminjaman_kondisi_awal',
+        'peminjaman_foto_rusak_awal',
+        'peminjaman_km_akhir',
+        'peminjaman_foto_km_akhir',
+        'peminjaman_bensin_akhir',
+        'peminjaman_foto_bensin_akhir',
+        'peminjaman_foto_rusak_akhir',
         'peminjaman_id_approver',
         'peminjaman_perpanjang_ke',
         'peminjaman_catatan',
@@ -85,6 +96,17 @@ class Peminjaman extends BaseModel
             'peminjaman_denda' => 'nullable|numeric',
             'peminjaman_kondisi_kembali' => 'nullable|string',
             'peminjaman_foto_kembali' => 'nullable|string|max:255',
+            'peminjaman_km_awal' => 'nullable|numeric|min:0',
+            'peminjaman_foto_km_awal' => 'nullable|string|max:255',
+            'peminjaman_bensin_awal' => 'nullable|string|max:20',
+            'peminjaman_foto_bensin_awal' => 'nullable|string|max:255',
+            'peminjaman_kondisi_awal' => 'nullable|string|max:100',
+            'peminjaman_foto_rusak_awal' => 'nullable|string|max:255',
+            'peminjaman_km_akhir' => 'nullable|numeric|min:0',
+            'peminjaman_foto_km_akhir' => 'nullable|string|max:255',
+            'peminjaman_bensin_akhir' => 'nullable|string|max:20',
+            'peminjaman_foto_bensin_akhir' => 'nullable|string|max:255',
+            'peminjaman_foto_rusak_akhir' => 'nullable|string|max:255',
             'peminjaman_id_approver' => 'nullable|integer',
             'peminjaman_perpanjang_ke' => 'nullable|integer',
             'peminjaman_catatan' => 'nullable|string',
@@ -94,6 +116,36 @@ class Peminjaman extends BaseModel
     public function getPeminjamanFotoKembaliUrlAttribute(): string
     {
         return fileUrl($this->peminjaman_foto_kembali);
+    }
+
+    public function getPeminjamanFotoKmAwalUrlAttribute(): string
+    {
+        return fileUrl($this->peminjaman_foto_km_awal);
+    }
+
+    public function getPeminjamanFotoBensinAwalUrlAttribute(): string
+    {
+        return fileUrl($this->peminjaman_foto_bensin_awal);
+    }
+
+    public function getPeminjamanFotoRusakAwalUrlAttribute(): string
+    {
+        return fileUrl($this->peminjaman_foto_rusak_awal);
+    }
+
+    public function getPeminjamanFotoKmAkhirUrlAttribute(): string
+    {
+        return fileUrl($this->peminjaman_foto_km_akhir);
+    }
+
+    public function getPeminjamanFotoBensinAkhirUrlAttribute(): string
+    {
+        return fileUrl($this->peminjaman_foto_bensin_akhir);
+    }
+
+    public function getPeminjamanFotoRusakAkhirUrlAttribute(): string
+    {
+        return fileUrl($this->peminjaman_foto_rusak_akhir);
     }
 
     public function hasAset()

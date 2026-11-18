@@ -25,6 +25,7 @@
                 <x-input col="6" type="date" name="aset_tanggal_mulai_susut" />
                 <x-select col="6" name="aset_status" :options="App\Enums\Aset\StatusAsetEnum::getOptions()" />
                 <x-select col="6" name="aset_kondisi" :options="App\Enums\Aset\KondisiAsetEnum::getOptions()" />
+                <x-checkbox col="6" name="aset_bisa_dipinjam" label="Bisa Dipinjam" :checked="old('aset_bisa_dipinjam', ($model->aset_bisa_dipinjam ?? true) ? true : false)" helper="Aktif = aset muncul di list Peminjaman (mis. mobil operasional)" />
                 <div class="col-span-6">
                     <label class="font-body-sm text-body-sm font-bold text-on-surface-variant block mb-1">Kode QR</label>
                     <div class="flex gap-2">

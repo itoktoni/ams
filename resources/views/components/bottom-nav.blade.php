@@ -28,14 +28,19 @@
     }
 @endphp
 
-<nav class="md:hidden fixed inset-x-0 bottom-0 z-50 h-16 bg-surface-container-lowest border-t border-outline-variant shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+<nav class="md:hidden fixed inset-x-0 bottom-0 z-50 bg-surface-container-lowest border-t border-outline-variant shadow-[0_-4px_10px_rgba(0,0,0,0.05)]" style="padding-bottom: env(safe-area-inset-bottom);">
     <div class="flex items-center justify-around h-16 px-2">
+        @php
+            // Tombol tengah menonjol hanya jika jumlah item ganjil >= 3 (normal: 5).
+            // Kalau item terfilter permission (mis. tinggal 2-4), semua tampil rata.
+            $centerIndex = count($bottomNav) >= 3 && count($bottomNav) % 2 === 1 ? intdiv(count($bottomNav), 2) : -1;
+        @endphp
         @foreach($bottomNav as $index => $item)
             @php
                 $routeName = $item['route'];
                 $url = route($routeName);
                 $isActive = request()->routeIs($routeName) || request()->routeIs($routeName . '.*');
-                $isCenter = $index === 2;
+                $isCenter = $index === $centerIndex;
             @endphp
 
             @if($isCenter)

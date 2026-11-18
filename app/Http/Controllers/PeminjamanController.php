@@ -53,8 +53,10 @@ class PeminjamanController extends Controller
         }
         $activePeminjamanMap = \App\Models\Peminjaman::where('peminjaman_status', 'aktif')->whereNull('peminjaman_tanggal_kembali')->get()->keyBy('peminjaman_id_aset');
 
-        // Peminjaman: tampilkan semua aset yang bisa dipinjam (aktif & tidak sedang dipinjam)
+        // Peminjaman: hanya aset yang flag bisa_dipinjam = true (mis. mobil operasional),
+        // aktif & tidak sedang dipinjam
         $allAvailableIds = Aset::whereNotIn('aset_id', $sedangDipinjamAll)
+            ->where(function ($q) { $q->where('aset_bisa_dipinjam', true)->orWhereNull('aset_bisa_dipinjam'); })
             ->where(function($q){ $q->where('aset_status','aktif')->orWhereNull('aset_status')->orWhere('aset_status',''); })
             ->orderBy('aset_nama')->pluck('aset_id')->all();
         // Jika tidak ada yang aktif, fallback ke semua tersedia
@@ -85,14 +87,18 @@ class PeminjamanController extends Controller
 
     public function postCreate(GeneralRequest $request)
     {
-        $this->handleUploads($request, ['peminjaman_foto_kembali'], 'peminjaman');
+        $this->handleUploads($request, ['peminjaman_foto_kembali', 'peminjaman_foto_km_awal', 'peminjaman_foto_bensin_awal', 'peminjaman_foto_rusak_awal', 'peminjaman_foto_km_akhir', 'peminjaman_foto_bensin_akhir', 'peminjaman_foto_rusak_akhir'], 'peminjaman');
         $user = auth()->user();
         $isPengguna = $user && in_array($user->role, ['pengguna_aset', 'user'], true);
         $asetId = (int) $request->input('peminjaman_id_aset');
         if ($asetId) {
+            $aset = Aset::where('aset_id', $asetId)->first(['aset_id', 'aset_nama', 'aset_bisa_dipinjam']);
+            if ($aset && ! $aset->aset_bisa_dipinjam) {
+                return $this->response(['status' => false, 'message' => $aset->aset_nama.' tidak bisa dipinjam (flag bisa dipinjam mati).', 'data' => null]);
+            }
             $sedangDipinjam = Peminjaman::where('peminjaman_id_aset', $asetId)->where('peminjaman_status', 'aktif')->whereNull('peminjaman_tanggal_kembali')->exists();
             if ($sedangDipinjam) {
-                $asetNama = Aset::where('aset_id', $asetId)->value('aset_nama') ?? 'Aset';
+                $asetNama = $aset->aset_nama ?? Aset::where('aset_id', $asetId)->value('aset_nama') ?? 'Aset';
                 return $this->response(['status' => false, 'message' => $asetNama.' sedang dipinjam — silakan masuk Daftar Tunggu.', 'data' => null]);
             }
         }
@@ -111,7 +117,7 @@ class PeminjamanController extends Controller
     public function postUpdate(GeneralRequest $request, $id)
     {
         $m = $this->model->findOrFail($id);
-        $this->handleUploads($request, ['peminjaman_foto_kembali'], 'peminjaman', $m->toArray());
+        $this->handleUploads($request, ['peminjaman_foto_kembali', 'peminjaman_foto_km_awal', 'peminjaman_foto_bensin_awal', 'peminjaman_foto_rusak_awal', 'peminjaman_foto_km_akhir', 'peminjaman_foto_bensin_akhir', 'peminjaman_foto_rusak_akhir'], 'peminjaman', $m->toArray());
 
         return $this->response(UpdateAction::run($request, $id, $this->model));
     }

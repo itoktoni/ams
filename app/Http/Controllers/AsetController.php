@@ -68,6 +68,7 @@ class AsetController extends Controller
     public function postCreate(GeneralRequest $request)
     {
         $this->handleUploads($request, ['aset_foto'], 'aset');
+        $request->merge(['aset_bisa_dipinjam' => $request->boolean('aset_bisa_dipinjam')]);
         // Auto-generate kode asset jika kosong (sesuai AsetService::kodeAset AST/YYYYMM/xxxxx)
         if (empty(trim((string) $request->input('aset_kode')))) {
             $request->merge(['aset_kode' => AsetService::kodeAset()]);
@@ -83,6 +84,7 @@ class AsetController extends Controller
     {
         $m = $this->model->findOrFail($id);
         $this->handleUploads($request, ['aset_foto'], 'aset', $m->toArray());
+        $request->merge(['aset_bisa_dipinjam' => $request->boolean('aset_bisa_dipinjam')]);
         $payload = \App\Actions\UpdateAction::run($request, $id, $this->model);
         if (!empty($payload['status'])) {
             $this->syncSukuCadang((int) $id, $request->input('suku_cadang_ids', []));

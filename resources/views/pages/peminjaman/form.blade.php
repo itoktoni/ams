@@ -3,7 +3,7 @@
 <x-layouts::app>
     <x-breadcrumb :items="[['url' => moduleRoute('getTable'), 'label' => moduleLabel()], ['url' => '', 'label' => isset($model) && $model->exists ? 'Update' : 'Create']]" />
 
-    <x-form :model="$model">
+    <x-form :model="$model" enctype="multipart/form-data">
         <x-card :label="moduleLabel()">
             @bind($model ?? null)
 
@@ -41,6 +41,34 @@
 
             @endbind
         </x-card>
+
+        <x-card label="Serah Terima — Awal Peminjaman" icon="speed">
+            @bind($model ?? null)
+
+                <x-input col="6" type="number" step="any" name="peminjaman_km_awal" label="Kilometer Awal" placeholder="Angka odometer saat diserahkan" />
+                <x-input col="6" name="peminjaman_bensin_awal" label="Bensin Awal" placeholder="mis. Penuh / 3/4 / 1/2 / E" />
+                <x-file col="6" name="peminjaman_foto_km_awal" label="Foto Kilometer Awal" accept="image/*" capture="environment" :preview="true" :value="$model?->peminjaman_foto_km_awal_url" helper="Foto odometer saat serah terima" />
+                <x-file col="6" name="peminjaman_foto_bensin_awal" label="Foto Bensin Awal" accept="image/*" capture="environment" :preview="true" :value="$model?->peminjaman_foto_bensin_awal_url" helper="Foto indikator bensin saat serah terima" />
+                <x-input col="6" name="peminjaman_kondisi_awal" label="Kondisi Awal" placeholder="mis. Baik / Lecet bemper depan" />
+                <x-file col="6" name="peminjaman_foto_rusak_awal" label="Foto Kerusakan Awal" accept="image/*" capture="environment" :preview="true" :value="$model?->peminjaman_foto_rusak_awal_url" helper="Isi jika ada kerusakan sebelum dipinjam" />
+
+            @endbind
+        </x-card>
+
+        @if(isset($model) && $model->exists)
+        <x-card label="Pengembalian — Akhir Peminjaman" icon="assignment_return">
+            @bind($model ?? null)
+
+                <x-input col="6" type="number" step="any" name="peminjaman_km_akhir" label="Kilometer Akhir" placeholder="Angka odometer saat dikembalikan" />
+                <x-input col="6" name="peminjaman_bensin_akhir" label="Bensin Akhir" placeholder="mis. Penuh / 3/4 / 1/2 / E" />
+                <x-file col="6" name="peminjaman_foto_km_akhir" label="Foto Kilometer Akhir" accept="image/*" capture="environment" :preview="true" :value="$model?->peminjaman_foto_km_akhir_url" helper="Foto odometer saat pengembalian" />
+                <x-file col="6" name="peminjaman_foto_bensin_akhir" label="Foto Bensin Akhir" accept="image/*" capture="environment" :preview="true" :value="$model?->peminjaman_foto_bensin_akhir_url" helper="Foto indikator bensin saat pengembalian" />
+                <x-input col="6" name="peminjaman_kondisi_kembali" label="Kondisi Kembali" placeholder="mis. Baik / Ada lecet baru" />
+                <x-file col="6" name="peminjaman_foto_rusak_akhir" label="Foto Kerusakan Akhir" accept="image/*" capture="environment" :preview="true" :value="$model?->peminjaman_foto_rusak_akhir_url" helper="Isi jika ada kerusakan setelah dipakai" />
+
+            @endbind
+        </x-card>
+        @endif
 
         <x-action :model="$model" :action="['save']">
             @if(isset($model) && $model->exists && in_array($model->peminjaman_status ?? '', ['aktif','selesai'], true))
