@@ -32,9 +32,12 @@
                 <div class="col-span-2"><span class="text-on-surface-variant text-xs">Penanggung Jawab</span><p class="font-medium">{{ $aset->hasPenanggungJawab?->name ?? '-' }} {{ $aset->hasPenanggungJawab?->email ? '• '.$aset->hasPenanggungJawab->email : '' }}</p></div>
             </div>
             @auth
-            <div class="flex gap-2 mt-4">
+            <div class="flex gap-2 mt-4 flex-wrap">
                 <a href="{{ $aset->tiket_qr_url }}" class="inline-flex items-center gap-2 h-10 px-4 bg-primary text-on-primary rounded-xl text-sm font-semibold"><span class="material-symbols-outlined">confirmation_number</span> Buat Tiket</a>
                 <a href="{{ route('aset.getUpdate', ['id' => $aset->aset_id]) }}" class="inline-flex items-center gap-2 h-10 px-4 bg-white border border-outline-variant rounded-xl text-sm font-semibold">Detail Lengkap</a>
+                @if(in_array(auth()->user()->role, [\App\Enums\RoleEnum::ADMIN, \App\Enums\RoleEnum::DEVELOPER], true))
+                <a href="{{ route('aset.getUpdate', ['id' => $aset->aset_id]) }}" class="inline-flex items-center gap-2 h-10 px-4 bg-amber-500 text-white rounded-xl text-sm font-semibold"><span class="material-symbols-outlined">edit</span> Edit</a>
+                @endif
             </div>
             @else
             <div class="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm">
