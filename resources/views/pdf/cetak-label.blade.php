@@ -13,7 +13,7 @@
     border-radius: 4px;
     padding: 2px;
     text-align: center;
-    height: 72px;
+    height: 78px;
     overflow: hidden;
   }
   table.top { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -22,8 +22,8 @@
   .logo img { height: 30px; }
   td.qr { width: 40px; text-align: right; }
   .qr img { width: 38px; height: 38px; }
-  .kode { font-size: 6pt; margin-top: 2px; word-break: break-all; }
-  .nama { font-size: 6.5pt; margin-top: 1px; line-height: 1.2; }
+  .kode { font-size: 5pt; line-height: 1.15; margin-top: 2px; word-break: break-all; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; }
+  .nama { font-size: 5.5pt; line-height: 1.2; margin-top: 1px; word-wrap: break-word; overflow-wrap: break-word; }
   .url { font-size: 4.5pt; color: #888; margin-top: 1px; word-break: break-all; }
   .cut { font-size: 4pt; color: #aaa; margin-top: 1px; }
 </style>
@@ -45,8 +45,8 @@
                   <td class="qr"><div class="qr"><img src="{{ $aset->qr_data_uri }}" alt="QR"></div></td>
                 </tr>
               </table>
-              <div class="kode">{{ $aset->nomor_label }}</div>
-              <div class="nama">{{ $aset->aset_nama }}</div>
+              <div class="kode" @if(strlen($aset->nomor_label ?? '') > 28) style="font-size: 4.2pt;" @endif>{{ $aset->nomor_label }}</div>
+              <div class="nama">{{ \Illuminate\Support\Str::limit($aset->aset_nama, 45) }}</div>
             </div>
           </td>
         @endforeach

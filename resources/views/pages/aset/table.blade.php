@@ -27,7 +27,7 @@
                 <x-table-checkbox :model="$model" onchange="toggleAll(this)" />
                 <th>Actions</th>
                 @foreach ($model::$sortColumns as $column)
-                <x-table-sort field="{{ $column }}" label="{{ formatLabel($column) }}" :sortField="$sortField" :sortDir="$sortDir" />
+                <x-table-sort field="{{ $column }}" label="{{ $column === 'aset_id_lokasi' ? 'Ruangan' : formatLabel($column) }}" :sortField="$sortField" :sortDir="$sortDir" />
                 @endforeach
             </x-slot:head>
 
@@ -66,7 +66,9 @@
                         </div>
                     </td>
                     @foreach ($model::$sortColumns as $column)
-                        @if ($column === 'aset_harga_perolehan')
+                        @if ($column === 'aset_id_lokasi')
+                            <td>{{ $table->has_lokasi?->aset_lokasi_nama ?? '-' }}</td>
+                        @elseif ($column === 'aset_harga_perolehan')
                             <td class="text-right">{{ formatAngka((float) $table->$column) }}</td>
                         @elseif ($column === 'aset_tanggal_perolehan')
                             <td>{{ formatDate($table->$column) }}</td>
@@ -161,6 +163,10 @@
                                 <div class="bg-surface-container-low/70 rounded-xl px-2.5 py-2">
                                     <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase">Nilai Sisa</p>
                                     <p class="text-xs font-bold text-on-surface mt-1 leading-tight">{{ formatRupiah($table->aset_nilai_sisa) }}</p>
+                                </div>
+                                <div class="bg-surface-container-low/70 rounded-xl px-2.5 py-2 col-span-2">
+                                    <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase">Ruangan</p>
+                                    <p class="text-xs font-medium text-on-surface mt-1">{{ $table->has_lokasi?->aset_lokasi_nama ?? '-' }}</p>
                                 </div>
                                 <div class="bg-surface-container-low/70 rounded-xl px-2.5 py-2 col-span-2 flex items-center justify-between">
                                     <div>

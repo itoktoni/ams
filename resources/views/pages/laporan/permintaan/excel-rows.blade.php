@@ -1,0 +1,3 @@
+@foreach($data as $row)
+<tr><td>{{ $row['no'] }}</td><td>{{ $row['r']->permintaan_suku_cadang_nomor }}</td><td>{{ $row['r']->hasSukuCadang?->suku_cadang_nama ?? '-' }}</td><td>{{ $row['r']->hasPeminta?->name ?? '-' }}</td><td>{{ $row['r']->hasDepartment?->department_nama ?? '-' }}</td><td>{{ formatQty($row['r']->permintaan_suku_cadang_jumlah) }}</td><td>{{ formatRupiah($row['r']->permintaan_suku_cadang_subtotal, false) }}</td><td>{{ $row['r']->permintaan_suku_cadang_tanggal_permintaan ? formatDate($row['r']->permintaan_suku_cadang_tanggal_permintaan) : '-' }}</td><td>{{ $row['r']->permintaan_suku_cadang_status }}</td></tr>
+@endforeach

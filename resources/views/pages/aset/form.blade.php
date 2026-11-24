@@ -12,11 +12,13 @@
                 <x-select col="6" name="aset_id_kategori" :options="App\Models\KategoriAset::getOptions()" onchange="renderCustomFields()" />
                 <x-select col="6" name="aset_id_lokasi" :options="App\Models\LokasiAset::getOptions()" />
                 <x-select col="6" name="aset_id_penanggung_jawab" label="Penanggung Jawab" :options="App\Models\User::getOptions()" />
+                <x-select col="6" name="aset_id_department" label="Divisi Aset" :options="App\Models\Department::getOptions()" helper="Divisi pemilik aset — tampil di report & dipakai segmen label" />
                 <x-select col="6" name="aset_id_group" label="Group Teknisi" :options="App\Models\MasterGroup::getOptions()" helper="Jika tiket dibuat untuk aset ini, notifikasi ke semua teknisi dalam group" />
                 <x-select col="6" name="aset_id_vendor" :options="App\Models\Vendor::getOptions()" />
                 <x-input col="6" name="aset_merek" />
                 <x-input col="6" name="aset_model" />
                 <x-input col="6" name="aset_nomor_seri" />
+                <x-input col="6" name="aset_label_lama" label="Kode Label Lama" helper="Nomor lama dari Excel inventaris (mis. 001/9BSH/2026) — untuk tracking penggantian label" />
                 <x-input col="6" type="date" name="aset_tanggal_perolehan" />
                 <x-input col="6" type="number" step="any" name="aset_harga_perolehan" />
                 <x-input col="6" type="number" step="any" name="aset_nilai_sisa" />

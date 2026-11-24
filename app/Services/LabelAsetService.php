@@ -48,13 +48,15 @@ class LabelAsetService
             return $aset->aset_nomor_label;
         }
 
-        $aset->loadMissing(['hasLokasi', 'hasPenanggungJawab.hasDepartment']);
+        $aset->loadMissing(['hasLokasi', 'hasDepartment', 'hasPenanggungJawab.hasDepartment']);
 
         $clean = fn ($v) => strtoupper(trim(preg_replace('/[^A-Z0-9]+/i', '', (string) ($v ?: ''))));
 
         $lok = $clean($aset->hasLokasi?->aset_lokasi_kode) ?: 'APN';
         $reg = self::extractRegional($aset->hasLokasi?->aset_lokasi_zona) ?: 'IX';
-        $dept = $clean($aset->hasPenanggungJawab?->hasDepartment?->department_kode) ?: 'SDM';
+        $dept = $clean($aset->hasDepartment?->department_kode)
+            ?: $clean($aset->hasPenanggungJawab?->hasDepartment?->department_kode)
+            ?: 'SDM';
         $distrik = self::extractDistrik($aset->hasLokasi?->aset_lokasi_nama) ?: 'DST1';
 
         $prefix = "{$lok}/{$reg}/{$dept}/{$distrik}";

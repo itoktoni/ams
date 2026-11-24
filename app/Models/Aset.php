@@ -25,6 +25,7 @@ class Aset extends BaseModel
         'aset_id_kategori',
         'aset_id_lokasi',
         'aset_id_penanggung_jawab',
+        'aset_id_department',
         'aset_id_group',
         'aset_id_vendor',
         'aset_merek',
@@ -42,6 +43,7 @@ class Aset extends BaseModel
         'aset_foto',
         'aset_kode_qr',
         'aset_nomor_label',
+        'aset_label_lama',
         'aset_jam_pakai',
         'aset_custom_fields',
         'aset_catatan',
@@ -59,6 +61,7 @@ class Aset extends BaseModel
     public static $sortColumns = [
         'aset_kode',
         'aset_nama',
+        'aset_id_lokasi',
         'aset_merek',
         'aset_tanggal_perolehan',
         'aset_harga_perolehan',
@@ -93,6 +96,7 @@ class Aset extends BaseModel
             'aset_id_kategori' => 'nullable|integer',
             'aset_id_lokasi' => 'nullable|integer',
             'aset_id_penanggung_jawab' => 'nullable|integer',
+            'aset_id_department' => 'nullable|integer',
             'aset_id_group' => 'nullable|integer|exists:master_group,master_group_id',
             'aset_id_vendor' => 'nullable|integer',
             'aset_merek' => 'nullable|string|max:80',
@@ -110,6 +114,7 @@ class Aset extends BaseModel
             'aset_foto' => 'nullable|string|max:255',
             'aset_kode_qr' => 'nullable|string|max:100',
             'aset_nomor_label' => 'nullable|string|max:100',
+            'aset_label_lama' => 'nullable|string|max:100',
             'aset_jam_pakai' => 'nullable|numeric|min:0',
             'aset_custom_fields' => 'nullable|array',
             'aset_custom_fields.*' => 'nullable|string|max:5000',
@@ -135,6 +140,11 @@ class Aset extends BaseModel
     public function hasPenanggungJawab()
     {
         return $this->hasOne(User::class, 'id', 'aset_id_penanggung_jawab');
+    }
+
+    public function hasDepartment()
+    {
+        return $this->hasOne(Department::class, 'department_id', 'aset_id_department');
     }
 
     public function hasVendor()
@@ -186,7 +196,7 @@ class Aset extends BaseModel
     public function getQrUrlAttribute(): string
     {
         $kode = $this->aset_kode_qr ?: $this->aset_kode;
-        return url('/aset/scan/'.trim($kode));
+        return rtrim(config('app.url'), '/').'/aset/scan/'.trim($kode);
     }
 
     public function getQrValueAttribute(): string
@@ -197,7 +207,7 @@ class Aset extends BaseModel
     public function getTiketQrUrlAttribute(): string
     {
         $kode = $this->aset_kode_qr ?: $this->aset_kode;
-        return url('/tiket/create?aset_qr='.trim($kode));
+        return rtrim(config('app.url'), '/').'/tiket/create?aset_qr='.trim($kode);
     }
 
     public function getScanQrUrlAttribute(): string

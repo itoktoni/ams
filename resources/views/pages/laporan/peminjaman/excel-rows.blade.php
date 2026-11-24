@@ -1,0 +1,3 @@
+@foreach($data as $row)
+<tr><td>{{ $row['no'] }}</td><td>{{ $row['r']->peminjaman_nomor }}</td><td>{{ ($row['r']->hasAset?->aset_nama ?? '-') . ' (' . ($row['r']->hasAset?->aset_kode ?? '-') . ')' }}</td><td>{{ $row['r']->hasPeminjam?->name ?? '-' }}</td><td>{{ \Illuminate\Support\Str::limit($row['r']->peminjaman_tujuan ?? '-', 40) }}</td><td>{{ formatDate($row['r']->peminjaman_tanggal_pinjam) }}</td><td>{{ formatDate($row['r']->peminjaman_jatuh_tempo) }}</td><td>{{ $row['r']->peminjaman_tanggal_kembali ? formatDate($row['r']->peminjaman_tanggal_kembali) : '-' }}</td><td>{{ $row['r']->peminjaman_status }}</td><td>{{ formatRupiah($row['r']->peminjaman_denda, false) }}</td></tr>
+@endforeach

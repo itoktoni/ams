@@ -104,8 +104,20 @@ Route::middleware(['auth', 'verified', 'access'])->group(function () {
     Route::auto('/penjualan-aset', 'PenjualanAsetController', ['name' => 'penjualan-aset']);
     // Keuangan — pembayaran berkala (air, listrik, internet, dll)
     Route::auto('/pembayaran', 'PembayaranController', ['name' => 'pembayaran']);
-    // Laporan (getIndex → /laporan otomatis dari auto-route)
-    Route::auto('/laporan', 'ReportController', ['name' => 'laporan']);
+    // Laporan — 1 controller per report (pola LhpReportController kalteng2)
+    Route::auto('/laporan-aset', 'Laporan.AsetReportController', ['name' => 'laporan-aset']);
+    Route::auto('/laporan-penyusutan', 'Laporan.PenyusutanReportController', ['name' => 'laporan-penyusutan']);
+    Route::auto('/laporan-peminjaman', 'Laporan.PeminjamanReportController', ['name' => 'laporan-peminjaman']);
+    Route::auto('/laporan-perpindahan', 'Laporan.PerpindahanReportController', ['name' => 'laporan-perpindahan']);
+    Route::auto('/laporan-opname', 'Laporan.OpnameReportController', ['name' => 'laporan-opname']);
+    Route::auto('/laporan-penghapusan', 'Laporan.PenghapusanReportController', ['name' => 'laporan-penghapusan']);
+    Route::auto('/laporan-persetujuan', 'Laporan.PersetujuanReportController', ['name' => 'laporan-persetujuan']);
+    Route::auto('/laporan-purchase', 'Laporan.PurchaseReportController', ['name' => 'laporan-purchase']);
+    Route::auto('/laporan-sukucadang', 'Laporan.SukuCadangReportController', ['name' => 'laporan-sukucadang']);
+    Route::auto('/laporan-pergerakan', 'Laporan.PergerakanReportController', ['name' => 'laporan-pergerakan']);
+    Route::auto('/laporan-permintaan', 'Laporan.PermintaanReportController', ['name' => 'laporan-permintaan']);
+    Route::auto('/laporan-service', 'Laporan.ServiceReportController', ['name' => 'laporan-service']);
+    Route::auto('/laporan-penjualan', 'Laporan.PenjualanReportController', ['name' => 'laporan-penjualan']);
 
     Route::get('/native-bridge-test', function () {
         return view('pages.settings.native-bridge-test');

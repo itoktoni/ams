@@ -1,0 +1,3 @@
+@foreach($data as $row)
+<tr><td>{{ $row['no'] }}</td><td>{{ $row['r']->penjualan_aset_nomor }}</td><td>{{ ($row['r']->hasAset?->aset_nama ?? '-') . ' (' . ($row['r']->hasAset?->aset_kode ?? '-') . ')' }}</td><td>{{ formatDate($row['r']->penjualan_aset_tanggal_request) }}</td><td>{{ formatRupiah($row['r']->penjualan_aset_nilai_buku, false) }}</td><td>{{ formatRupiah($row['r']->penjualan_aset_harga_appraisal, false) }}</td><td>{{ $row['r']->hasPenawaran->count() . ' (' . formatRupiah($row['r']->hasPenawaran->max('penawaran_penjualan_harga') ?? 0, false) . ' max)' }}</td><td>{{ $row['r']->penjualan_aset_status }}</td></tr>
+@endforeach

@@ -39,11 +39,19 @@
                     @endforeach
                 </select>
             </div>
+            <div class="col-span-6 md:col-span-3">
+                <label class="text-xs font-medium text-on-surface-variant">Tanggal Buat (Dari)</label>
+                <input type="date" name="tanggal_dari" value="{{ $filters['tanggal_dari'] ?? '' }}" class="w-full h-10 px-3 border border-outline-variant rounded-xl text-sm">
+            </div>
+            <div class="col-span-6 md:col-span-3">
+                <label class="text-xs font-medium text-on-surface-variant">Tanggal Buat (Sampai)</label>
+                <input type="date" name="tanggal_sampai" value="{{ $filters['tanggal_sampai'] ?? '' }}" class="w-full h-10 px-3 border border-outline-variant rounded-xl text-sm">
+            </div>
             <div class="col-span-6 md:col-span-2 flex items-end">
                 <button type="submit" class="h-10 px-5 rounded-xl bg-primary text-on-primary font-semibold w-full">Tampilkan</button>
             </div>
             <div class="col-span-6 md:col-span-3 flex items-end">
-                <a href="{{ route('cetak-label.getPdf', request()->only(['department_id', 'kategori_id', 'lokasi_id', 'status'])) }}" target="_blank" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-semibold w-full inline-flex items-center justify-center gap-1">
+                <a href="{{ route('cetak-label.getPdf', request()->only(['department_id', 'kategori_id', 'lokasi_id', 'status', 'tanggal_dari', 'tanggal_sampai'])) }}" target="_blank" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-semibold w-full inline-flex items-center justify-center gap-1">
                     <span class="material-symbols-outlined text-lg">print</span> Cetak PDF A4
                 </a>
             </div>

@@ -30,6 +30,12 @@ class CetakLabelController extends Controller
         if ($request->filled('status')) {
             $query->where('aset_status', $request->input('status'));
         }
+        if ($request->filled('tanggal_dari')) {
+            $query->whereDate('created_at', '>=', $request->input('tanggal_dari'));
+        }
+        if ($request->filled('tanggal_sampai')) {
+            $query->whereDate('created_at', '<=', $request->input('tanggal_sampai'));
+        }
 
         return $query;
     }
@@ -63,7 +69,7 @@ class CetakLabelController extends Controller
 
         return view('pages.cetak-label.index', [
             'items' => $items,
-            'filters' => $request->only(['department_id', 'kategori_id', 'lokasi_id', 'status']),
+            'filters' => $request->only(['department_id', 'kategori_id', 'lokasi_id', 'status', 'tanggal_dari', 'tanggal_sampai']),
             'departments' => Department::getOptions(),
             'kategoris' => KategoriAset::getOptions(),
             'lokasis' => LokasiAset::getOptions(),
