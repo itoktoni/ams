@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
  * Report Peminjaman — peminjaman aset + denda per periode.
  * - getTable: form filter, hasil dibuka di tab baru (getPrint).
  * - getPrint: halaman print standalone (Cetak / Salin TSV / Export Excel).
+ * - getExportPdf: download PDF server-side (DomPDF).
  * - getExportExcel: streaming Excel (.xls via HTML table), chunk 1000.
  */
 class PeminjamanReportController extends Controller
@@ -32,10 +33,31 @@ class PeminjamanReportController extends Controller
             return redirect()->route('laporan-peminjaman.getExportExcel', $request->query());
         }
 
-        return view('pages.laporan.peminjaman.print', [
+        return view('pages.laporan.peminjaman.print', array_merge([
             'data' => (clone $query)->get(),
             'statusOptions' => \App\Enums\StatusPeminjamanEnum::getOptions(),
-        ]);
+        ], \App\Services\ReportKopService::make('REPORT PEMINJAMAN', $request->only([
+            'dari', 'sampai', 'status',
+        ]))));
+    }
+
+    public function getExportPdf(Request $request)
+    {
+        set_time_limit(0);
+
+        $query = $this->baseQuery($request);
+        $data = (clone $query)->get();
+
+        $kop = \App\Services\ReportKopService::make('REPORT PEMINJAMAN', $request->only([
+            'dari', 'sampai', 'status',
+        ]));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'pages.laporan.peminjaman.pdf',
+            array_merge(['data' => $data], $kop, \App\Services\ReportKopService::pdfImages())
+        )->setPaper('A4', 'landscape');
+
+        return $pdf->stream('report-peminjaman-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function getExportExcel(Request $request)

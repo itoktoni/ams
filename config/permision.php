@@ -54,6 +54,8 @@ $restrict['supervisor'] = [
     'vendor' => false,
     'department' => ['create' => false, 'delete' => false],
     'gudang' => false,
+    'bbm-pengajuan' => ['delete' => false], // approval & hapus hanya admin/developer
+    'bbm-kuota' => false, // kuota hanya admin/developer
     // explicit allow Pergerakan & Penghapusan — jangan di-deny (biarkan empty = allow)
 ];
 
@@ -90,7 +92,9 @@ $restrict['teknisi'] = [
     'peminjaman' => false,
     'daftar-tunggu' => false,
     'reputasi-peminjam' => false,
-    // boleh: tiket, batch-tiket, teknisi (self), aset (view), alert, permintaan-suku-cadang
+    'bbm-kuota' => false, // kuota hanya admin/developer
+    'bbm-pengajuan' => ['delete' => false], // hapus hanya admin/developer
+    // boleh: tiket, batch-tiket, teknisi (self), aset (view), alert, permintaan-suku-cadang, bbm-pengajuan
 ];
 
 // ── PENGGUNA ASET (karyawan): pakai aset + pinjam + lihat dokumen — hanya lihat aset yang di-assign, tidak boleh edit/hapus/recalc
@@ -131,6 +135,8 @@ $restrict['pengguna_aset'] = [
     'riwayat-service' => false,
     'penjualan-aset' => false,
     'permintaan-suku-cadang' => ['delete' => false],
+    'bbm-kuota' => false, // kuota hanya admin/developer
+    'bbm-pengajuan' => ['delete' => false], // boleh ajukan & lihat milik sendiri; hapus hanya admin/developer
     // aset & buku: hanya boleh table/show + beritaAcara, tidak boleh create/update/delete/recalc (detail buku tetap boleh lihat untuk aset sendiri)
     'aset' => ['create' => false, 'update' => false, 'delete' => false, 'recalc' => false],
     'buku-penyusutan' => ['create' => false, 'update' => false, 'delete' => false],
@@ -184,6 +190,8 @@ $restrict['customer'] = [
     'penjualan-aset' => false,
     'permintaan-suku-cadang' => false,
     'pembayaran' => false,
+    'bbm-kuota' => false,
+    'bbm-pengajuan' => false,
     // lelang.* tidak di-restrict (public), biar lolos
 ];
 
@@ -195,6 +203,8 @@ $restrict['user'] = [
     'user' => false,
     'settings.env' => false,
     'buku-penyusutan' => ['create' => false, 'update' => false, 'delete' => false],
+    'bbm-kuota' => false,
+    'bbm-pengajuan' => ['delete' => false],
 ];
 $restrict['editor'] = [
     'cms-type' => false,
@@ -202,6 +212,8 @@ $restrict['editor'] = [
     'section' => false,
     'user' => false,
     'settings.env' => false,
+    'bbm-kuota' => false,
+    'bbm-pengajuan' => ['delete' => false],
 ];
 
 return $restrict;

@@ -39,6 +39,97 @@
       <a href="{{ route('permintaan-suku-cadang.getTable') }}" class="text-primary underline">Permintaan ({{ $amsStats['permintaan_menunggu'] }} menunggu)</a>
     </div>
     @endif
+
+    {{-- Ringkasan kuota BBM bulan ini --}}
+    @if(!empty($bbmInfo) && $role !== 'customer')
+    @php
+      $bbmKuota = (float) $bbmInfo['kuota'];
+      $bbmTerpakai = (float) $bbmInfo['terpakai'];
+      $bbmMenunggu = (float) $bbmInfo['pending'];
+      $bbmTersedia = (float) $bbmInfo['tersedia'];
+      $bbmOver = $bbmTersedia < 0 || $bbmKuota <= 0;
+      $bbmPct = $bbmKuota > 0 ? min(100, (($bbmTerpakai + $bbmMenunggu) / $bbmKuota) * 100) : 100;
+    @endphp
+    <div class="mt-3 w-full max-w-full min-w-0 rounded-xl border p-3 {{ $bbmOver ? 'border-error/30 bg-error/5' : 'border-primary/20 bg-primary/5' }}">
+      <div class="flex items-center justify-between gap-2 mb-2 min-w-0">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="material-symbols-outlined text-primary text-[18px] shrink-0">local_gas_station</span>
+          <p class="text-[11px] sm:text-xs font-bold text-on-surface truncate">
+            Kuota BBM {{ $bbmInfo['periode'] }} @if($user->jenis_kendaraan_label !== '-')· {{ $user->jenis_kendaraan_label }}@endif
+          </p>
+        </div>
+        <a href="{{ route('bbm-pengajuan.getTable') }}" class="text-[11px] font-semibold text-primary underline shrink-0">Lihat</a>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div class="rounded-lg bg-surface-container-lowest/70 px-2.5 py-2 min-w-0">
+          <p class="text-[9px] font-bold tracking-wider text-on-surface-variant uppercase truncate">Kuota</p>
+          <p class="text-sm font-bold text-on-surface truncate">{{ formatQty($bbmKuota) }} L</p>
+        </div>
+        <div class="rounded-lg bg-surface-container-lowest/70 px-2.5 py-2 min-w-0">
+          <p class="text-[9px] font-bold tracking-wider text-on-surface-variant uppercase truncate">Terpakai</p>
+          <p class="text-sm font-bold text-on-surface truncate">{{ formatQty($bbmTerpakai) }} L</p>
+        </div>
+        <div class="rounded-lg bg-surface-container-lowest/70 px-2.5 py-2 min-w-0">
+          <p class="text-[9px] font-bold tracking-wider text-on-surface-variant uppercase truncate">Menunggu</p>
+          <p class="text-sm font-bold text-on-surface truncate">{{ formatQty($bbmMenunggu) }} L</p>
+        </div>
+        <div class="rounded-lg bg-surface-container-lowest/70 px-2.5 py-2 min-w-0">
+          <p class="text-[9px] font-bold tracking-wider text-on-surface-variant uppercase truncate">Tersedia</p>
+          <p class="text-sm font-bold truncate {{ $bbmOver ? 'text-error' : 'text-primary' }}">{{ formatQty($bbmTersedia) }} L</p>
+        </div>
+      </div>
+      <div class="mt-2 h-1.5 bg-outline-variant/20 rounded-full overflow-hidden">
+        <div class="h-full {{ $bbmOver ? 'bg-error' : 'bg-primary' }}" style="width: {{ $bbmPct }}%"></div>
+      </div>
+      @if($bbmKuota <= 0)
+      <p class="mt-2 text-[10px] text-on-surface-variant">Kuota belum ditetapkan — hubungi admin di menu Kuota BBM.</p>
+      @endif
+    </div>
+    @endif
+
+    {{-- Admin/developer: pemakaian per user, otomatis ikut perubahan peminta --}}
+    @if(!empty($bbmPerUser))
+    <div class="mt-3 w-full max-w-full min-w-0 rounded-xl border border-primary/20 bg-primary/5 p-3">
+      <div class="flex items-center justify-between gap-2 mb-2 min-w-0">
+        <p class="text-[11px] sm:text-xs font-bold text-on-surface truncate">Pemakaian BBM per User · {{ now()->format('Y-m') }}</p>
+        <a href="{{ route('bbm-kuota.getTable') }}" class="text-[11px] font-semibold text-primary underline shrink-0">Atur kuota</a>
+      </div>
+      <div class="space-y-2">
+        @foreach($bbmPerUser as $row)
+        @php
+          $rowKuota = (float) $row['kuota'];
+          $rowTerpakai = (float) $row['terpakai'];
+          $rowMenunggu = (float) $row['pending'];
+          $rowTersedia = (float) $row['tersedia'];
+          $rowOver = $rowTersedia < 0 || $rowKuota <= 0;
+          $rowPct = $rowKuota > 0 ? min(100, (($rowTerpakai + $rowMenunggu) / $rowKuota) * 100) : 100;
+        @endphp
+        <div class="rounded-lg bg-surface-container-lowest/70 px-3 py-2 min-w-0">
+          <div class="flex items-start justify-between gap-2 min-w-0">
+            <div class="min-w-0">
+              <p class="text-xs font-bold text-on-surface truncate">{{ $row['user']->name }}</p>
+              <p class="text-[10px] text-on-surface-variant truncate">
+                {{ \App\Enums\Bbm\JenisKendaraanBbmEnum::getDescription($row['user']->jenis_kendaraan) }}
+                @if($row['user']->kendaraan)· {{ $row['user']->kendaraan }}@endif
+                @if($row['user']->unit_kode)· {{ $row['user']->unit_kode }}@endif
+              </p>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="text-xs font-bold {{ $rowOver ? 'text-error' : 'text-primary' }}">{{ formatQty($rowTerpakai) }} L terpakai</p>
+              <p class="text-[10px] text-on-surface-variant">{{ formatQty($rowMenunggu) }} L menunggu</p>
+            </div>
+          </div>
+          <div class="mt-2 flex items-center gap-2">
+            <div class="flex-1 h-1.5 bg-outline-variant/20 rounded-full overflow-hidden">
+              <div class="h-full {{ $rowOver ? 'bg-error' : 'bg-primary' }}" style="width: {{ $rowPct }}%"></div>
+            </div>
+            <span class="text-[10px] text-on-surface-variant whitespace-nowrap">kuota {{ formatQty($rowKuota) }} L · sisa {{ formatQty($rowTersedia) }} L</span>
+          </div>
+        </div>
+        @endforeach
+      </div>
+    </div>
+    @endif
   </div>
   <div class="flex flex-col sm:flex-row gap-2 sm:items-center min-w-0">
     @if($role==='customer')

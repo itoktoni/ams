@@ -15,6 +15,10 @@
                 <button type="submit" formaction="{{ route('laporan-service.getExportExcel') }}" formtarget="_self" class="inline-flex h-10 items-center justify-center gap-1 rounded-lg border border-outline-variant px-4 text-sm font-semibold text-on-surface-variant transition-all hover:bg-surface-container">
                     <span class="material-symbols-outlined text-xl">download</span> Export Excel
                 </button>
+                <button type="submit" formaction="{{ route('laporan-service.getExportPdf') }}" formtarget="_blank" class="inline-flex h-10 items-center justify-center gap-1 rounded-lg bg-error px-4 text-sm font-semibold text-white transition-all hover:brightness-110">
+                    <span class="material-symbols-outlined text-xl">picture_as_pdf</span> Lihat PDF
+                </button>
+
             </x-action>
         </form>
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Charts\DashboardChart;
 use App\Models\Alert;
 use App\Models\Aset;
+use App\Models\BbmPengajuan;
 use App\Models\Department;
 use App\Models\DokumenAset;
 use App\Models\JadwalService;
@@ -12,6 +13,7 @@ use App\Models\Peminjaman;
 use App\Models\PermintaanSukuCadang;
 use App\Models\Teknisi;
 use App\Models\Tiket;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -191,7 +193,37 @@ class DashboardController extends Controller
             }, null);
         }
 
-        return compact('recentAset', 'recentTiket', 'kategoriDist', 'expiringCustom', 'opnameProgress', 'permintaanRecent', 'budgetInfo');
+        $bbmInfo = null;
+        if ($role !== 'customer') {
+            $bbmInfo = $this->safeQuery(fn () => BbmPengajuan::ringkasanUser($user->id), null);
+        }
+
+        // Admin/developer melihat pemakaian per user (ikut berubah saat peminta diganti).
+        $bbmPerUser = null;
+        if (in_array($role, ['developer', 'admin'], true)) {
+            $bbmPerUser = $this->safeQuery(function () {
+                $periode = now()->format('Y-m');
+
+                return User::query()
+                    ->whereNotNull('jenis_kendaraan')
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'jenis_kendaraan', 'kendaraan'])
+                    ->map(function (User $u) use ($periode) {
+                        $r = BbmPengajuan::ringkasanUser($u->id, $periode);
+
+                        return [
+                            'user' => $u,
+                            'kuota' => $r['kuota'],
+                            'terpakai' => $r['terpakai'],
+                            'pending' => $r['pending'],
+                            'tersedia' => $r['tersedia'],
+                        ];
+                    })
+                    ->all();
+            }, []);
+        }
+
+        return compact('recentAset', 'recentTiket', 'kategoriDist', 'expiringCustom', 'opnameProgress', 'permintaanRecent', 'budgetInfo', 'bbmInfo', 'bbmPerUser');
     }
 
     private function safeCount(callable $callback, int $default = 0): int

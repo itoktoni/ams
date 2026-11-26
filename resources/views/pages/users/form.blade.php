@@ -14,6 +14,10 @@
 
                 <x-input col="6" name="phone" placeholder="08xxxxxxxxxx" />
 
+                <x-select col="6" name="jenis_kendaraan" label="Jenis Kendaraan" :options="$jenisKendaraanOptions" />
+                <x-input col="6" name="kendaraan" label="Kendaraan (Nama / No. Polisi, opsional)" placeholder="mis. Mobil A / B 1234 ABC" />
+                <x-input col="6" name="unit_kode" label="Unit / Kode" placeholder="mis. COP" />
+
                 <div class="col-span-12">
                     <label class="font-body-sm text-body-sm font-bold text-on-surface-variant block mb-1">Telegram Chat ID</label>
                     <div class="flex gap-2">

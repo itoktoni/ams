@@ -26,6 +26,8 @@
             <x-slot:head>
                 <x-table-checkbox :model="$model" onchange="toggleAll(this)" />
                 <th>Actions</th>
+                <th>Kendaraan</th>
+                <th>Unit</th>
                 @foreach ($model::$sortColumns as $column)
                 <x-table-sort field="{{ $column }}" label="{{ formatLabel($column) }}" :sortField="$sortField" :sortDir="$sortDir" />
                 @endforeach
@@ -36,6 +38,8 @@
                 <tr>
                     <x-table-row-checkbox :model="$model" :value="$table->field_primary" />
                     <x-table-action :model="$model" :id="$table->field_primary" />
+                    <td>{{ $table->jenis_kendaraan_label }}@if($table->kendaraan) — {{ $table->kendaraan }}@endif</td>
+                    <td>{{ $table->unit_kode ?? '-' }}</td>
                     @foreach ($model::$sortColumns as $column)
                     <td>{{ $table->$column }}</td>
                     @endforeach
@@ -80,6 +84,14 @@
                                         </p>
                                     </div>
                                 @endforeach
+                                <div class="bg-surface-container-low/70 rounded-xl px-2.5 py-2">
+                                    <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase truncate">Kendaraan</p>
+                                    <p class="text-xs font-medium text-on-surface mt-1 truncate">{{ $table->jenis_kendaraan_label }}@if($table->kendaraan) — {{ $table->kendaraan }}@endif</p>
+                                </div>
+                                <div class="bg-surface-container-low/70 rounded-xl px-2.5 py-2">
+                                    <p class="text-[10px] font-bold tracking-widest text-on-surface-variant/70 uppercase truncate">Unit</p>
+                                    <p class="text-xs font-medium text-on-surface mt-1 truncate">{{ $table->unit_kode ?? '-' }}</p>
+                                </div>
                             </div>
                         </div>
                         <div class="flex items-center justify-between px-3.5 py-2.5 bg-surface-container-low/40 border-t border-outline-variant/10" onclick="event.stopPropagation()">

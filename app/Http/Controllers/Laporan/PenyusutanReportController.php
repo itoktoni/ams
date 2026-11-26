@@ -30,9 +30,30 @@ class PenyusutanReportController extends Controller
             return redirect()->route('laporan-penyusutan.getExportExcel', $request->query());
         }
 
-        return view('pages.laporan.penyusutan.print', [
+        return view('pages.laporan.penyusutan.print', array_merge([
             'data' => (clone $query)->get(),
-        ]);
+        ], \App\Services\ReportKopService::make('REPORT PENYUSUTAN', $request->only([
+            'dari', 'sampai',
+        ]))));
+    }
+
+    public function getExportPdf(Request $request)
+    {
+        set_time_limit(0);
+
+        $query = $this->baseQuery($request);
+        $data = (clone $query)->get();
+
+        $kop = \App\Services\ReportKopService::make('REPORT PENYUSUTAN', $request->only([
+            'dari', 'sampai',
+        ]));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'pages.laporan.penyusutan.pdf',
+            array_merge(['data' => $data], $kop, \App\Services\ReportKopService::pdfImages())
+        )->setPaper('A4', 'landscape');
+
+        return $pdf->stream('report-penyusutan-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function getExportExcel(Request $request)

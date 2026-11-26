@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\CreateAction;
 use App\Actions\UpdateAction;
 use App\Concerns\ControllerTrait;
+use App\Enums\Bbm\JenisKendaraanBbmEnum;
 use App\Enums\RoleEnum;
 use App\Http\Requests\GeneralRequest;
 use App\Models\User;
@@ -20,6 +21,7 @@ class UsersController extends Controller
         $default = [
             'model' => $this->model,
             'role' => RoleEnum::getOptions(),
+            'jenisKendaraanOptions' => JenisKendaraanBbmEnum::getOptions(),
         ];
 
         return array_merge($default, $data);

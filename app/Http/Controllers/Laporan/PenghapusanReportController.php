@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
  * Report Penghapusan — aset dihapus + nilai buku per periode.
  * - getTable: form filter, hasil dibuka di tab baru (getPrint).
  * - getPrint: halaman print standalone (Cetak / Salin TSV / Export Excel).
+ * - getExportPdf: download PDF server-side (DomPDF).
  * - getExportExcel: streaming Excel (.xls via HTML table), chunk 1000.
  */
 class PenghapusanReportController extends Controller
@@ -32,10 +33,31 @@ class PenghapusanReportController extends Controller
             return redirect()->route('laporan-penghapusan.getExportExcel', $request->query());
         }
 
-        return view('pages.laporan.penghapusan.print', [
+        return view('pages.laporan.penghapusan.print', array_merge([
             'data' => (clone $query)->get(),
             'statusOptions' => \App\Enums\Penghapusan\StatusPenghapusanEnum::getOptions(),
-        ]);
+        ], \App\Services\ReportKopService::make('REPORT PENGHAPUSAN', $request->only([
+            'dari', 'sampai', 'status',
+        ]))));
+    }
+
+    public function getExportPdf(Request $request)
+    {
+        set_time_limit(0);
+
+        $query = $this->baseQuery($request);
+        $data = (clone $query)->get();
+
+        $kop = \App\Services\ReportKopService::make('REPORT PENGHAPUSAN', $request->only([
+            'dari', 'sampai', 'status',
+        ]));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'pages.laporan.penghapusan.pdf',
+            array_merge(['data' => $data], $kop, \App\Services\ReportKopService::pdfImages())
+        )->setPaper('A4', 'landscape');
+
+        return $pdf->stream('report-penghapusan-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function getExportExcel(Request $request)

@@ -72,4 +72,32 @@ return [
     ],
 
     'footer_text' => env('WEBSITE_FOOTER_TEXT', ''),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Gambar Header & Footer Report (cetak / PDF / Excel)
+    |--------------------------------------------------------------------------
+    |
+    | Di-upload lewat Settings → Website. Tampil full-width di atas
+    | (header/kop) dan bawah (footer) setiap halaman cetak laporan.
+    | Filter (divisi/ruangan/dll) otomatis tampil sebagai sub-judul
+    | via ReportKopService::filterTitle().
+    |
+    */
+
+    'report' => [
+        'header_left' => env('REPORT_HEADER_LEFT', ''),
+        'header_image' => env('REPORT_HEADER_IMAGE', ''),
+        'footer_image' => env('REPORT_FOOTER_IMAGE', ''),
+        'show_header' => env('REPORT_SHOW_HEADER', true),
+        'show_footer' => env('REPORT_SHOW_FOOTER', true),
+        // Fallback teks bila gambar belum di-upload.
+        'instansi' => env('REPORT_INSTANSI', env('APP_NAME', 'KIRO AMS')),
+        'kop_alamat' => env('REPORT_KOP_ALAMAT', env('WEBSITE_ALAMAT', '')),
+        'kota' => env('REPORT_KOTA', ''),
+        'jabatan' => env('REPORT_JABATAN', 'Mengetahui,'),
+        'nama_tertanda' => env('REPORT_NAMA', ''),
+        'nip' => env('REPORT_NIP', ''),
+        'show_print_meta' => env('REPORT_SHOW_PRINT_META', true),
+    ],
 ];

@@ -30,10 +30,27 @@ class SukuCadangReportController extends Controller
             return redirect()->route('laporan-sukucadang.getExportExcel', $request->query());
         }
 
-        return view('pages.laporan.sukucadang.print', [
+        return view('pages.laporan.sukucadang.print', array_merge([
             'data' => (clone $query)->get(),
             'stokmap' => $this->stokMap(),
-        ]);
+        ], \App\Services\ReportKopService::make('REPORT SUKUCADANG', $request->only([]))));
+    }
+
+    public function getExportPdf(Request $request)
+    {
+        set_time_limit(0);
+
+        $query = $this->baseQuery($request);
+        $data = (clone $query)->get();
+
+        $kop = \App\Services\ReportKopService::make('REPORT SUKUCADANG', $request->only([]));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'pages.laporan.sukucadang.pdf',
+            array_merge(['data' => $data, 'stokmap' => $this->stokMap()], $kop, \App\Services\ReportKopService::pdfImages())
+        )->setPaper('A4', 'landscape');
+
+        return $pdf->stream('report-sukucadang-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function getExportExcel(Request $request)

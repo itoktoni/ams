@@ -30,9 +30,30 @@ class ServiceReportController extends Controller
             return redirect()->route('laporan-service.getExportExcel', $request->query());
         }
 
-        return view('pages.laporan.service.print', [
+        return view('pages.laporan.service.print', array_merge([
             'data' => (clone $query)->get(),
-        ]);
+        ], \App\Services\ReportKopService::make('REPORT SERVICE', $request->only([
+            'dari', 'sampai',
+        ]))));
+    }
+
+    public function getExportPdf(Request $request)
+    {
+        set_time_limit(0);
+
+        $query = $this->baseQuery($request);
+        $data = (clone $query)->get();
+
+        $kop = \App\Services\ReportKopService::make('REPORT SERVICE', $request->only([
+            'dari', 'sampai',
+        ]));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'pages.laporan.service.pdf',
+            array_merge(['data' => $data], $kop, \App\Services\ReportKopService::pdfImages())
+        )->setPaper('A4', 'landscape');
+
+        return $pdf->stream('report-service-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function getExportExcel(Request $request)

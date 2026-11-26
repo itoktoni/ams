@@ -7,6 +7,7 @@ use Abbasudo\Purity\Traits\Filterable;
 use Abbasudo\Purity\Traits\Sortable;
 use App\Concerns\DefaultEntity;
 use App\Concerns\OptionTrait;
+use App\Enums\Bbm\JenisKendaraanBbmEnum;
 use App\Notifications\ResetPasswordNotification;
 use App\Properties\UserEntity;
 use Database\Factories\UserFactory;
@@ -22,7 +23,7 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * @mixin IdeHelperUser
  */
-#[Fillable(['name', 'email', 'password', 'role', 'phone', 'telegram_id', 'avatar', 'verified_at'])]
+#[Fillable(['name', 'email', 'password', 'role', 'phone', 'jenis_kendaraan', 'kendaraan', 'unit_kode', 'telegram_id', 'avatar', 'verified_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -77,6 +78,9 @@ class User extends Authenticatable
             'role' => 'string',
             'password' => 'string',
             'phone' => 'nullable|string|max:20',
+            'jenis_kendaraan' => 'nullable|string|max:20',
+            'kendaraan' => 'nullable|string|max:100',
+            'unit_kode' => 'nullable|string|max:20',
             'telegram_id' => 'nullable|string|max:50',
             'avatar' => 'nullable|string|max:255',
         ];
@@ -93,6 +97,14 @@ class User extends Authenticatable
     public function getAvatarUrlAttribute(): string
     {
         return fileUrl($this->avatar);
+    }
+
+    /** Label jenis kendaraan (Mobil/Motor) untuk ditampilkan di tabel & form. */
+    public function getJenisKendaraanLabelAttribute(): string
+    {
+        return $this->jenis_kendaraan
+            ? JenisKendaraanBbmEnum::getDescription($this->jenis_kendaraan)
+            : '-';
     }
 
     public function isDeveloper(): bool

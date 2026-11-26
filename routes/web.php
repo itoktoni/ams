@@ -104,6 +104,9 @@ Route::middleware(['auth', 'verified', 'access'])->group(function () {
     Route::auto('/penjualan-aset', 'PenjualanAsetController', ['name' => 'penjualan-aset']);
     // Keuangan — pembayaran berkala (air, listrik, internet, dll)
     Route::auto('/pembayaran', 'PembayaranController', ['name' => 'pembayaran']);
+    // BBM — kuota bulanan per user & pengajuan pembelian (auto: approve/reject)
+    Route::auto('/bbm-kuota', 'BbmKuotaController', ['name' => 'bbm-kuota']);
+    Route::auto('/bbm-pengajuan', 'BbmPengajuanController', ['name' => 'bbm-pengajuan']);
     // Laporan — 1 controller per report (pola LhpReportController kalteng2)
     Route::auto('/laporan-aset', 'Laporan.AsetReportController', ['name' => 'laporan-aset']);
     Route::auto('/laporan-penyusutan', 'Laporan.PenyusutanReportController', ['name' => 'laporan-penyusutan']);
@@ -118,6 +121,7 @@ Route::middleware(['auth', 'verified', 'access'])->group(function () {
     Route::auto('/laporan-permintaan', 'Laporan.PermintaanReportController', ['name' => 'laporan-permintaan']);
     Route::auto('/laporan-service', 'Laporan.ServiceReportController', ['name' => 'laporan-service']);
     Route::auto('/laporan-penjualan', 'Laporan.PenjualanReportController', ['name' => 'laporan-penjualan']);
+    Route::auto('/laporan-bbm', 'Laporan.BbmReportController', ['name' => 'laporan-bbm']);
 
     Route::get('/native-bridge-test', function () {
         return view('pages.settings.native-bridge-test');

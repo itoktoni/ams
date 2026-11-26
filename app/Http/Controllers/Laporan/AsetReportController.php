@@ -9,7 +9,8 @@ use Illuminate\Http\Request;
 /**
  * Report Aset — daftar aset + nilai perolehan per periode.
  * - getTable: form filter, hasil dibuka di tab baru (getPrint).
- * - getPrint: halaman print standalone (Cetak / Salin TSV / Export Excel).
+ * - getPrint: halaman print standalone (Cetak / Salin TSV / Export Excel / PDF).
+ * - getExportPdf: download PDF server-side (DomPDF) — tanpa dialog print browser.
  * - getExportExcel: streaming Excel (.xls via HTML table), chunk 1000.
  */
 class AsetReportController extends Controller
@@ -19,6 +20,8 @@ class AsetReportController extends Controller
         return view('pages.laporan.aset.table', [
             'statusOptions' => \App\Enums\Aset\StatusAsetEnum::getOptions(),
             'kondisiOptions' => \App\Enums\Aset\KondisiAsetEnum::getOptions(),
+            'divisiOptions' => \App\Models\Department::getOptions(),
+            'ruanganOptions' => \App\Models\LokasiAset::getOptions(),
         ]);
     }
 
@@ -33,11 +36,32 @@ class AsetReportController extends Controller
             return redirect()->route('laporan-aset.getExportExcel', $request->query());
         }
 
-        return view('pages.laporan.aset.print', [
+        return view('pages.laporan.aset.print', array_merge([
             'data' => (clone $query)->get(),
             'statusOptions' => \App\Enums\Aset\StatusAsetEnum::getOptions(),
             'kondisiOptions' => \App\Enums\Aset\KondisiAsetEnum::getOptions(),
-        ]);
+        ], \App\Services\ReportKopService::make('REPORT ASET', $request->only([
+            'dari', 'sampai', 'divisi', 'ruangan', 'status', 'kondisi',
+        ]))));
+    }
+
+    public function getExportPdf(Request $request)
+    {
+        set_time_limit(0);
+
+        $query = $this->baseQuery($request);
+        $data = (clone $query)->get();
+
+        $kop = \App\Services\ReportKopService::make('REPORT ASET', $request->only([
+            'dari', 'sampai', 'divisi', 'ruangan', 'status', 'kondisi',
+        ]));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'pages.laporan.aset.pdf',
+            array_merge(['data' => $data], $kop, \App\Services\ReportKopService::pdfImages())
+        )->setPaper('A4', 'landscape');
+
+        return $pdf->stream('report-aset-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function getExportExcel(Request $request)
@@ -49,7 +73,10 @@ class AsetReportController extends Controller
         $sampai = $request->input('sampai');
 
         return response()->streamDownload(function () use ($query, $dari, $sampai) {
-            echo view('pages.laporan.aset.excel-header', compact('dari', 'sampai'))->render();
+            $kop = \App\Services\ReportKopService::make('REPORT ASET', request()->only([
+                'dari', 'sampai', 'divisi', 'ruangan', 'status', 'kondisi',
+            ]));
+            echo view('pages.laporan.aset.excel-header', array_merge(compact('dari', 'sampai'), $kop))->render();
 
             $no = 0;
             $query->chunk(1000, function ($records) use (&$no) {
@@ -90,6 +117,12 @@ class AsetReportController extends Controller
         }
         if ($request->filled('kondisi')) {
             $query->where('aset_kondisi', $request->input('kondisi'));
+        }
+        if ($request->filled('divisi')) {
+            $query->where('aset_id_department', $request->input('divisi'));
+        }
+        if ($request->filled('ruangan')) {
+            $query->where('aset_id_lokasi', $request->input('ruangan'));
         }
 
         return $query;

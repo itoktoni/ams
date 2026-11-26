@@ -18,9 +18,7 @@
         @media print { .no-print { display: none; } @page { size: landscape; } }
     </style>
 </head>
-<body>
-    <h2>REPORT PENJUALAN ASET</h2>
-    <div class="sub">Periode: {{ request('dari') ?: '-' }} s/d {{ request('sampai') ?: '-' }} @if(request('status')) • Status: {{ $statusOptions[request('status')] ?? request('status') }}@endif • {{ $data->count() }} baris • Dicetak {{ now()->format('d M Y H:i') }} oleh {{ auth()->user()->name ?? '-' }}</div>
+@include('partials.report-kop', ['kop' => $kop ?? null, 'judul' => $judulReport ?? 'REPORT PENJUALAN', 'filterTitle' => $filterTitle ?? ''])
     <table class="data" id="reportTable">
         <thead><tr><th>No</th><th>Nomor</th><th>Aset</th><th>Tgl Request</th><th>Nilai Buku</th><th>Appraisal</th><th>Penawaran</th><th>Status</th></tr></thead>
         <tbody>
@@ -35,7 +33,9 @@
         <button type="button" class="btn-print" onclick="window.print()">Cetak / Simpan PDF</button>
         <button type="button" class="btn-copy" onclick="copyTsv()">Salin TSV (ke Google Sheet)</button>
         <a class="btn-excel" href="{{ route('laporan-penjualan.getExportExcel', request()->query()) }}">Export Excel</a>
+        <a class="btn-print" style="background:#c62828;" target="_blank" href="{{ route('laporan-penjualan.getExportPdf', request()->query()) }}">Lihat PDF</a>
     </div>
+    @include('partials.report-footer', ['footer' => $footer ?? null])
     <script>
     function copyTsv() {
         const rows = [];

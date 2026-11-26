@@ -106,6 +106,13 @@ return [
             ],
         ],
         [
+            'label' => 'BBM',
+            'items' => [
+                ['route' => 'bbm-pengajuan.getTable', 'icon' => 'local_gas_station', 'label' => 'Pengajuan BBM', 'match' => ['bbm-pengajuan.*']],
+                ['route' => 'bbm-kuota.getTable', 'icon' => 'gas_meter', 'label' => 'Kuota BBM', 'match' => ['bbm-kuota.*']],
+            ],
+        ],
+        [
             'label' => 'Laporan',
             'items' => [
                 ['route' => 'laporan-aset.getTable', 'icon' => 'precision_manufacturing', 'label' => 'Lap. Aset'],
@@ -121,6 +128,7 @@ return [
                 ['route' => 'laporan-permintaan.getTable', 'icon' => 'inventory_2', 'label' => 'Lap. Permintaan SC'],
                 ['route' => 'laporan-service.getTable', 'icon' => 'history', 'label' => 'Lap. Service'],
                 ['route' => 'laporan-penjualan.getTable', 'icon' => 'sell', 'label' => 'Lap. Penjualan'],
+                ['route' => 'laporan-bbm.getTable', 'icon' => 'local_gas_station', 'label' => 'Lap. BBM'],
             ],
         ],
         [

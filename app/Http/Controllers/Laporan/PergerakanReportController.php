@@ -32,10 +32,31 @@ class PergerakanReportController extends Controller
             return redirect()->route('laporan-pergerakan.getExportExcel', $request->query());
         }
 
-        return view('pages.laporan.pergerakan.print', [
+        return view('pages.laporan.pergerakan.print', array_merge([
             'data' => (clone $query)->get(),
             'tipeOptions' => \App\Enums\Stok\TipePergerakanStokEnum::getOptions(),
-        ]);
+        ], \App\Services\ReportKopService::make('REPORT PERGERAKAN', $request->only([
+            'dari', 'sampai', 'tipe',
+        ]))));
+    }
+
+    public function getExportPdf(Request $request)
+    {
+        set_time_limit(0);
+
+        $query = $this->baseQuery($request);
+        $data = (clone $query)->get();
+
+        $kop = \App\Services\ReportKopService::make('REPORT PERGERAKAN', $request->only([
+            'dari', 'sampai', 'tipe',
+        ]));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'pages.laporan.pergerakan.pdf',
+            array_merge(['data' => $data], $kop, \App\Services\ReportKopService::pdfImages())
+        )->setPaper('A4', 'landscape');
+
+        return $pdf->stream('report-pergerakan-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function getExportExcel(Request $request)

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Bbm\JenisKendaraanBbmEnum;
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,7 @@ class ProfileController extends Controller
         return view('pages.settings.profile', [
             'user' => $user,
             'otherSessions' => $otherSessions,
+            'jenisKendaraanOptions' => JenisKendaraanBbmEnum::getOptions(),
         ]);
     }
 

@@ -55,6 +55,8 @@
                                 <x-input col="12" name="name" label="Full Name" />
                                 <x-input col="12" name="email" type="email" label="Email Address" />
                                 <x-input col="12" name="phone" label="Phone" placeholder="08xxxxxxxxxx" />
+                                <x-select col="12" name="jenis_kendaraan" label="Jenis Kendaraan (untuk pengajuan BBM)" :options="$jenisKendaraanOptions" />
+                                <x-input col="12" name="kendaraan" label="Nama / No. Polisi Kendaraan (opsional)" placeholder="mis. Mobil A / B 1234 ABC" />
                                 <div class="col-span-12">
                                     <label class="font-body-sm text-body-sm font-bold text-on-surface-variant block mb-1">Telegram Chat ID</label>
                                     <div class="flex gap-2">

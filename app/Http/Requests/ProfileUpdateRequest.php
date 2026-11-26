@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\Bbm\JenisKendaraanBbmEnum;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -27,6 +28,8 @@ class ProfileUpdateRequest extends FormRequest
             ],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:1024'],
             'telegram_id' => ['nullable', 'string', 'max:50', 'regex:/^[0-9]+$/'],
+            'jenis_kendaraan' => ['nullable', 'string', Rule::in(JenisKendaraanBbmEnum::getValues())],
+            'kendaraan' => ['nullable', 'string', 'max:100'],
         ];
     }
 }

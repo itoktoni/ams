@@ -32,10 +32,31 @@ class PermintaanReportController extends Controller
             return redirect()->route('laporan-permintaan.getExportExcel', $request->query());
         }
 
-        return view('pages.laporan.permintaan.print', [
+        return view('pages.laporan.permintaan.print', array_merge([
             'data' => (clone $query)->get(),
             'statusOptions' => \App\Enums\SukuCadang\StatusPermintaanEnum::getOptions(),
-        ]);
+        ], \App\Services\ReportKopService::make('REPORT PERMINTAAN', $request->only([
+            'dari', 'sampai', 'status',
+        ]))));
+    }
+
+    public function getExportPdf(Request $request)
+    {
+        set_time_limit(0);
+
+        $query = $this->baseQuery($request);
+        $data = (clone $query)->get();
+
+        $kop = \App\Services\ReportKopService::make('REPORT PERMINTAAN', $request->only([
+            'dari', 'sampai', 'status',
+        ]));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'pages.laporan.permintaan.pdf',
+            array_merge(['data' => $data], $kop, \App\Services\ReportKopService::pdfImages())
+        )->setPaper('A4', 'landscape');
+
+        return $pdf->stream('report-permintaan-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function getExportExcel(Request $request)

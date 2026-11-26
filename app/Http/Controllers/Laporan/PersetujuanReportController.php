@@ -33,11 +33,32 @@ class PersetujuanReportController extends Controller
             return redirect()->route('laporan-persetujuan.getExportExcel', $request->query());
         }
 
-        return view('pages.laporan.persetujuan.print', [
+        return view('pages.laporan.persetujuan.print', array_merge([
             'data' => (clone $query)->get(),
             'statusOptions' => \App\Enums\Persetujuan\StatusPersetujuanEnum::getOptions(),
             'levelOptions' => \App\Enums\Persetujuan\LevelPersetujuanEnum::getOptions(),
-        ]);
+        ], \App\Services\ReportKopService::make('REPORT PERSETUJUAN', $request->only([
+            'status', 'level',
+        ]))));
+    }
+
+    public function getExportPdf(Request $request)
+    {
+        set_time_limit(0);
+
+        $query = $this->baseQuery($request);
+        $data = (clone $query)->get();
+
+        $kop = \App\Services\ReportKopService::make('REPORT PERSETUJUAN', $request->only([
+            'status', 'level',
+        ]));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'pages.laporan.persetujuan.pdf',
+            array_merge(['data' => $data], $kop, \App\Services\ReportKopService::pdfImages())
+        )->setPaper('A4', 'landscape');
+
+        return $pdf->stream('report-persetujuan-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function getExportExcel(Request $request)

@@ -32,10 +32,31 @@ class PurchaseReportController extends Controller
             return redirect()->route('laporan-purchase.getExportExcel', $request->query());
         }
 
-        return view('pages.laporan.purchase.print', [
+        return view('pages.laporan.purchase.print', array_merge([
             'data' => (clone $query)->get(),
             'statusOptions' => \App\Enums\Pesanan\StatusPesananEnum::getOptions(),
-        ]);
+        ], \App\Services\ReportKopService::make('REPORT PURCHASE', $request->only([
+            'dari', 'sampai', 'status',
+        ]))));
+    }
+
+    public function getExportPdf(Request $request)
+    {
+        set_time_limit(0);
+
+        $query = $this->baseQuery($request);
+        $data = (clone $query)->get();
+
+        $kop = \App\Services\ReportKopService::make('REPORT PURCHASE', $request->only([
+            'dari', 'sampai', 'status',
+        ]));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'pages.laporan.purchase.pdf',
+            array_merge(['data' => $data], $kop, \App\Services\ReportKopService::pdfImages())
+        )->setPaper('A4', 'landscape');
+
+        return $pdf->stream('report-purchase-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function getExportExcel(Request $request)

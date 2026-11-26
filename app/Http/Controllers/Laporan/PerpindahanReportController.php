@@ -32,10 +32,31 @@ class PerpindahanReportController extends Controller
             return redirect()->route('laporan-perpindahan.getExportExcel', $request->query());
         }
 
-        return view('pages.laporan.perpindahan.print', [
+        return view('pages.laporan.perpindahan.print', array_merge([
             'data' => (clone $query)->get(),
             'statusOptions' => \App\Enums\Perpindahan\StatusPerpindahanEnum::getOptions(),
-        ]);
+        ], \App\Services\ReportKopService::make('REPORT PERPINDAHAN', $request->only([
+            'dari', 'sampai', 'status',
+        ]))));
+    }
+
+    public function getExportPdf(Request $request)
+    {
+        set_time_limit(0);
+
+        $query = $this->baseQuery($request);
+        $data = (clone $query)->get();
+
+        $kop = \App\Services\ReportKopService::make('REPORT PERPINDAHAN', $request->only([
+            'dari', 'sampai', 'status',
+        ]));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'pages.laporan.perpindahan.pdf',
+            array_merge(['data' => $data], $kop, \App\Services\ReportKopService::pdfImages())
+        )->setPaper('A4', 'landscape');
+
+        return $pdf->stream('report-perpindahan-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function getExportExcel(Request $request)

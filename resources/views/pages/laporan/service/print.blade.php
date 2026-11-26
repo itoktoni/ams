@@ -19,8 +19,7 @@
     </style>
 </head>
 <body>
-    <h2>REPORT SERVICE</h2>
-    <div class="sub">Periode: {{ request('dari') ?: '-' }} s/d {{ request('sampai') ?: '-' }} • {{ $data->count() }} baris • Dicetak {{ now()->format('d M Y H:i') }} oleh {{ auth()->user()->name ?? '-' }}</div>
+    @include('partials.report-kop', ['kop' => $kop ?? null, 'judul' => $judulReport ?? 'REPORT SERVICE', 'filterTitle' => ($filterTitle ?? '').' • '.($data->count()).' baris'])
     <table class="data" id="reportTable">
         <thead><tr><th>No</th><th>Tanggal</th><th>Aset</th><th>Teknisi</th><th>Jenis</th><th>Biaya</th><th>Catatan</th></tr></thead>
         <tbody>
@@ -35,7 +34,9 @@
         <button type="button" class="btn-print" onclick="window.print()">Cetak / Simpan PDF</button>
         <button type="button" class="btn-copy" onclick="copyTsv()">Salin TSV (ke Google Sheet)</button>
         <a class="btn-excel" href="{{ route('laporan-service.getExportExcel', request()->query()) }}">Export Excel</a>
+        <a class="btn-print" style="background:#c62828;" href="{{ route('laporan-service.getExportPdf', request()->query()) }}" target="_blank">Lihat PDF</a>
     </div>
+    @include('partials.report-footer', ['footer' => $footer ?? null])
     <script>
     function copyTsv() {
         const rows = [];

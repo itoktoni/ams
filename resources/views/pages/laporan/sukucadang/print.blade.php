@@ -19,9 +19,8 @@
     </style>
 </head>
 <body>
-    @php $stok = fn($id) => (float) ($stokmap[$id] ?? 0); @endphp
-    <h2>REPORT SUKU CADANG</h2>
-    <div class="sub">Semua Periode • {{ $data->count() }} baris • Dicetak {{ now()->format('d M Y H:i') }} oleh {{ auth()->user()->name ?? '-' }}</div>
+        @php $stok = fn($id) => (float) ($stokmap[$id] ?? 0); @endphp
+    @include('partials.report-kop', ['kop' => $kop ?? null, 'judul' => $judulReport ?? 'REPORT SUKUCADANG', 'filterTitle' => ($filterTitle ?? '').' • '.($data->count()).' baris'])
     <table class="data" id="reportTable">
         <thead><tr><th>No</th><th>Kode</th><th>Nama</th><th>Gudang</th><th>Harga</th><th>Stok</th><th>Min</th><th>Status</th></tr></thead>
         <tbody>
@@ -36,7 +35,9 @@
         <button type="button" class="btn-print" onclick="window.print()">Cetak / Simpan PDF</button>
         <button type="button" class="btn-copy" onclick="copyTsv()">Salin TSV (ke Google Sheet)</button>
         <a class="btn-excel" href="{{ route('laporan-sukucadang.getExportExcel', request()->query()) }}">Export Excel</a>
+        <a class="btn-print" style="background:#c62828;" href="{{ route('laporan-sukucadang.getExportPdf', request()->query()) }}" target="_blank">Lihat PDF</a>
     </div>
+    @include('partials.report-footer', ['footer' => $footer ?? null])
     <script>
     function copyTsv() {
         const rows = [];
